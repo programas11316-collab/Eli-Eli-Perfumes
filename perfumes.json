@@ -1,0 +1,80 @@
+[
+  {
+    "__backendId": "id_1",
+    "tipo": "perfume",
+    "marca": "Armaf",
+    "nombre": "Club de Nuit",
+    "precio_5ml": 120,
+    "precio_10ml": 180,
+    "precio_botella": 699,
+    "estado": "Entrega Inmediata",
+    "stock": 1,
+    "imagen": "",
+    "descripcion": "Notas de salida: Limón, piña, bergamota, grosellas negras y manzana."
+  },
+  {
+    "__backendId": "id_2",
+    "tipo": "perfume",
+    "marca": "Armaf / Lattafa",
+    "nombre": "Odyssey Mandarin Sky",
+    "precio_5ml": 120,
+    "precio_10ml": 180,
+    "precio_botella": 699,
+    "estado": "Entrega Inmediata",
+    "stock": 1,
+    "imagen": "",
+    "descripcion": "Fragancia de la línea Odyssey."
+  },
+  {
+    "__backendId": "id_3",
+    "tipo": "perfume",
+    "marca": "Armaf / Lattafa",
+    "nombre": "Odyssey Mega",
+    "precio_5ml": 120,
+    "precio_10ml": 180,
+    "precio_botella": 699,
+    "estado": "Entrega Inmediata",
+    "stock": 1,
+    "imagen": "",
+    "descripcion": "Fragancia de la línea Odyssey."
+  },
+  {
+    "__backendId": "id_4",
+    "tipo": "perfume",
+    "marca": "Armaf / Lattafa",
+    "nombre": "Odyssey Aqua",
+    "precio_5ml": 120,
+    "precio_10ml": 180,
+    "precio_botella": 599,
+    "estado": "Entrega Inmediata",
+    "stock": 1,
+    "imagen": "",
+    "descripcion": "Fragancia de la línea Odyssey."
+  },
+  {
+    "__backendId": "id_5",
+    "tipo": "perfume",
+    "marca": "Afnan",
+    "nombre": "9 pm",
+    "precio_5ml": 120,
+    "precio_10ml": 180,
+    "precio_botella": 699,
+    "estado": "Entrega Inmediata",
+    "stock": 1,
+    "imagen": "",
+    "descripcion": "Notas de salida: Canela, manzana salvaje, lavanda y bergamota."
+  },
+  {
+    "__backendId": "id_6",
+    "tipo": "perfume",
+    "marca": "Rasasi",
+    "nombre": "Hawas Ice",
+    "precio_5ml": 120,
+    "precio_10ml": 180,
+    "precio_botella": 870,
+    "estado": "Entrega Inmediata",
+    "stock": 1,
+    "imagen": "",
+    "descripcion": "Notas acuáticas, manzana, bergamota y ciruela."
+  }
+]
