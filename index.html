@@ -295,17 +295,26 @@
   <!-- Lógica y Motor Local -->
   <script>
     window.dataSdk = {
-        _handler: null,
-        init(handler) {
-            this._handler = handler;
-            this.notify();
-        },
-        notify() {
-            if (this._handler && typeof this._handler.onDataChanged === 'function') {
-                const data = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
+    _handler: null,
+
+    async init(handler) {
+        this._handler = handler;
+        await this.notify();
+    },
+
+    async notify() {
+        if (this._handler && typeof this._handler.onDataChanged === 'function') {
+            try {
+                const response = await fetch('perfumes.json?t=' + Date.now());
+                const data = await response.json();
                 this._handler.onDataChanged(data);
+            } catch (error) {
+                console.error("Error al cargar los perfumes:", error);
+                this._handler.onDataChanged([]);
             }
-        },
+        }
+    }
+};
         async create(item) {
             const data = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
             item.__backendId = 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
