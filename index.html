@@ -1,0 +1,1016 @@
+<!doctype html>
+<html lang="es">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eli & Eli Perfumes y Decants - Control Local</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+      body { font-family: 'DM Sans', sans-serif; }
+  </style>
+ </head>
+ <body data-template-id="__page-root" class="min-h-screen w-full bg-gray-50">
+  <!-- Input oculto para importar JSON -->
+  <input type="file" id="import-file-input" accept=".json" class="hidden">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-30 border-b border-gray-200 backdrop-blur-sm bg-white/90">
+   <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center flex-wrap gap-3">
+    <div class="flex items-center gap-3">
+     <h1 class="text-xl font-bold text-gray-900">Eli & Eli Perfumes y Decants</h1>
+    </div>
+    
+    <div id="admin-actions" class="flex gap-2 items-center flex-wrap">
+     <button id="btn-export-backup" class="px-2.5 py-2 text-xs font-medium rounded-lg border border-gray-300 hover:bg-gray-100 flex items-center gap-1 text-gray-700" title="Descargar respaldo JSON">
+      <i data-lucide="download" style="width:14px;height:14px"></i> <span>Exportar</span>
+     </button>
+     <button id="btn-import-backup" class="px-2.5 py-2 text-xs font-medium rounded-lg border border-gray-300 hover:bg-gray-100 flex items-center gap-1 text-gray-700" title="Cargar respaldo JSON">
+      <i data-lucide="upload" style="width:14px;height:14px"></i> <span>Importar</span>
+     </button>
+     <div class="h-5 w-[1px] bg-gray-200 mx-1"></div>
+     <button id="btn-show-history" class="px-3 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-100 flex items-center gap-1">
+      <i data-lucide="bar-chart-3" style="width:16px;height:16px"></i> <span>Historial / Caja</span>
+     </button>
+     <button id="btn-show-fases" class="px-3 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-100 flex items-center gap-1">
+      <i data-lucide="layers" style="width:16px;height:16px"></i> <span>Fases</span>
+     </button>
+     <button id="btn-add-perfume" class="px-3 py-2 text-sm rounded-lg bg-gray-900 text-white hover:bg-gray-800 flex items-center gap-1">
+      <i data-lucide="plus" style="width:16px;height:16px"></i> <span>Perfume</span>
+     </button>
+    </div>
+   </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6">
+   <!-- Pending Alert -->
+   <div id="pending-alert" class="hidden mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 font-medium text-sm">
+    ⚠️ Tienes <span id="pending-count" class="font-bold">0</span> pedido(s) pendiente(s) por concretar.
+   </div>
+
+   <!-- CATALOG VIEW -->
+   <section id="view-catalog">
+    <!-- Filtros de Disponibilidad -->
+    <div class="mb-5 flex gap-2 items-center flex-wrap">
+     <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider mr-1">Filtrar Catálogo:</span>
+     <button data-cat-filter="todos" class="cat-filter-btn px-3 py-1.5 text-xs rounded-full border border-gray-300 bg-gray-900 text-white font-medium">Todos</button>
+     <button data-cat-filter="Entrega Inmediata" class="cat-filter-btn px-3 py-1.5 text-xs rounded-full border border-gray-300 hover:bg-gray-100">Entrega Inmediata</button>
+     <button data-cat-filter="Sobre Pedido" class="cat-filter-btn px-3 py-1.5 text-xs rounded-full border border-gray-300 hover:bg-gray-100">Sobre Pedido</button>
+    </div>
+
+    <div id="perfume-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8"></div>
+    <p id="empty-perfumes" class="hidden text-center text-gray-400 py-12">No hay perfumes registrados con este filtro.</p>
+
+    <!-- Pending Orders Section -->
+    <div id="admin-pending-section" class="mt-6 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+     <div class="p-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+      <h2 class="font-bold text-gray-800">Pedidos Pendientes / Apartados</h2>
+      <div id="filter-buttons" class="flex gap-1 flex-wrap">
+       <button data-filter="todos" class="filter-btn px-3 py-1 text-xs rounded-full border border-gray-300 bg-gray-900 text-white">Todos</button>
+       <button data-filter="Decant 5ml" class="filter-btn px-3 py-1 text-xs rounded-full border border-gray-300 hover:bg-gray-100">5ml</button>
+       <button data-filter="Decant 10ml" class="filter-btn px-3 py-1 text-xs rounded-full border border-gray-300 hover:bg-gray-100">10ml</button>
+       <button data-filter="Botella Completa" class="filter-btn px-3 py-1 text-xs rounded-full border border-gray-300 hover:bg-gray-100">Botella</button>
+      </div>
+     </div>
+     <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+       <thead class="bg-gray-50 text-left text-gray-500 uppercase text-xs">
+        <tr>
+         <th class="px-4 py-3">Comprador</th>
+         <th class="px-4 py-3">Perfume</th>
+         <th class="px-4 py-3">Tipo</th>
+         <th class="px-4 py-3">Fase</th>
+         <th class="px-4 py-3">Pagado / Total y Métodos</th>
+         <th class="px-4 py-3">Acciones</th>
+        </tr>
+       </thead>
+       <tbody id="pending-tbody"></tbody>
+      </table>
+      <p id="empty-pending" class="hidden text-center text-gray-400 py-6 text-sm">No hay pedidos pendientes.</p>
+     </div>
+    </div>
+   </section>
+
+   <!-- FASES VIEW -->
+   <section id="view-fases" class="hidden">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+     <div>
+      <h2 class="text-xl font-bold text-gray-900">Control de Inversión por Fases</h2>
+      <p class="text-xs text-gray-500">Genera fases consecutivas (F1, F2...) y visualiza inversión vs. ingresos reales de forma independiente.</p>
+     </div>
+     <div class="flex gap-2 flex-wrap">
+      <button id="btn-back-catalog-from-fases" class="px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white hover:bg-gray-100 flex items-center gap-1 shadow-sm">
+       <i data-lucide="arrow-left" style="width:16px;height:16px"></i> <span>Volver</span>
+      </button>
+      <button id="btn-add-fase" class="px-3 py-2 text-sm rounded-lg bg-gray-900 text-white hover:bg-gray-800 flex items-center gap-1 shadow-sm">
+       <i data-lucide="plus" style="width:16px;height:16px"></i> <span>Nueva Fase</span>
+      </button>
+      <button id="btn-reset-fases" class="px-3 py-2 text-sm rounded-lg border border-red-300 text-red-600 hover:bg-red-50 flex items-center gap-1 shadow-sm" title="Borrar todas las fases">
+       <i data-lucide="trash-2" style="width:16px;height:16px"></i> <span>Reset Fases</span>
+      </button>
+     </div>
+    </div>
+    <div id="fases-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+    <p id="empty-fases" class="hidden text-center text-gray-400 py-12">Aún no hay fases creadas. Haz clic en "Nueva Fase".</p>
+   </section>
+
+   <!-- HISTORY VIEW -->
+   <section id="view-history" class="hidden">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+     <div>
+      <h2 class="font-bold text-gray-900 text-xl">Historial de Ingresos y Ventas</h2>
+      <p class="text-xs text-gray-500">Consulta los ingresos reales y abonos recibidos.</p>
+     </div>
+     <div class="flex gap-2 flex-wrap">
+      <button id="btn-back-catalog" class="px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white hover:bg-gray-100 flex items-center gap-1 shadow-sm">
+       <i data-lucide="arrow-left" style="width:16px;height:16px"></i> <span>Volver</span>
+      </button>
+      <button id="btn-reset-history" class="px-3 py-2 text-sm rounded-lg border border-red-300 text-red-600 hover:bg-red-50 flex items-center gap-1 shadow-sm" title="Borrar historial de ventas">
+       <i data-lucide="trash-2" style="width:16px;height:16px"></i> <span>Limpiar Historial</span>
+      </button>
+     </div>
+    </div>
+
+    <!-- Filtros de Fases para el Historial -->
+    <div class="mb-4 bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between flex-wrap gap-2">
+     <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Filtrar Historial por Fase:</span>
+     <div id="history-filter-buttons" class="flex gap-1.5 flex-wrap">
+      <button data-history-filter="todos" class="history-filter-btn px-3 py-1 text-xs rounded-full border border-gray-300 bg-gray-900 text-white font-medium">Todas</button>
+     </div>
+    </div>
+
+    <div class="rounded-xl bg-white border border-gray-200 p-6 text-center mb-6 shadow-sm">
+     <p id="history-revenue-label" class="text-xs uppercase tracking-wide text-gray-500 mb-1">Ingresos Totales (Todas las Fases - Incluye Abonos)</p>
+     <p id="total-revenue" class="text-3xl font-bold text-gray-950">$0</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-x-auto shadow-sm">
+     <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-left text-gray-500 uppercase text-xs">
+       <tr>
+        <th class="px-4 py-3">Comprador</th>
+        <th class="px-4 py-3">Perfume</th>
+        <th class="px-4 py-3">Tipo</th>
+        <th class="px-4 py-3">Fase</th>
+        <th class="px-4 py-3">Monto / Desglose de Pagos</th>
+        <th class="px-4 py-3">Estado</th>
+       </tr>
+      </thead>
+      <tbody id="history-tbody"></tbody>
+     </table>
+     <p id="empty-history" class="hidden text-center text-gray-400 py-6 text-sm">Aún no hay ingresos registrados en este filtro.</p>
+    </div>
+   </section>
+  </main>
+
+  <!-- MODAL: Add/Edit Perfume -->
+  <div id="modal-perfume" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+   <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
+    <div class="flex justify-between items-center mb-4">
+     <h3 id="modal-perfume-title" class="text-lg font-bold">Nuevo Perfume</h3>
+     <button id="modal-perfume-close" type="button" class="text-gray-400 hover:text-gray-700"><i data-lucide="x" style="width:20px;height:20px"></i></button>
+    </div>
+    <form id="form-perfume" class="space-y-3">
+     <input type="hidden" id="pf-id" value="">
+     <input type="hidden" id="pf-imagen-base64" value="">
+     <div>
+      <label for="pf-nombre-input" class="block text-sm font-medium mb-1">Nombre</label>
+      <input id="pf-nombre-input" type="text" list="list-nombres" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Escribe o selecciona..." required>
+      <datalist id="list-nombres"></datalist>
+     </div>
+     <div>
+      <label for="pf-marca-input" class="block text-sm font-medium mb-1">Marca</label>
+      <input id="pf-marca-input" type="text" list="list-marcas" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Escribe o selecciona..." required>
+      <datalist id="list-marcas"></datalist>
+     </div>
+     <div>
+      <label for="pf-estado" class="block text-sm font-medium mb-1">Disponibilidad</label>
+      <select id="pf-estado" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+       <option value="Entrega Inmediata">Entrega Inmediata</option>
+       <option value="Sobre Pedido">Sobre Pedido</option>
+      </select>
+     </div>
+     <div class="grid grid-cols-3 gap-3">
+      <div><label for="pf-5ml" class="block text-sm font-medium mb-1">Precio 5ml</label><input id="pf-5ml" type="number" value="120" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required></div>
+      <div><label for="pf-10ml" class="block text-sm font-medium mb-1">Precio 10ml</label><input id="pf-10ml" type="number" value="180" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required></div>
+      <div><label for="pf-botella" class="block text-sm font-medium mb-1">Costo / Botella</label><input id="pf-botella" type="number" value="850" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required></div>
+     </div>
+     <div>
+      <label for="pf-stock" class="block text-sm font-medium mb-1">Stock / Piezas Base (Botellas)</label>
+      <input id="pf-stock" type="number" value="1" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required>
+     </div>
+     <div>
+      <label for="pf-image-file" class="block text-sm font-medium mb-1">Imagen del Perfume (PC)</label>
+      <input id="pf-image-file" type="file" accept="image/*" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-gray-900 file:text-white hover:file:bg-gray-800">
+      <div id="pf-image-preview-container" class="mt-2 hidden">
+       <span class="text-xs text-gray-500 block mb-1">Vista previa:</span>
+       <img id="pf-image-preview" src="" class="h-24 w-24 object-contain rounded-lg border border-gray-200" alt="Vista previa">
+      </div>
+     </div>
+     <button type="submit" id="pf-submit-btn" class="w-full bg-gray-900 text-white rounded-lg py-2.5 font-medium hover:bg-gray-800">Guardar Perfume</button>
+    </form>
+   </div>
+  </div>
+
+  <!-- MODAL: Add/Edit Fase -->
+  <div id="modal-fase" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+   <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6">
+    <div class="flex justify-between items-center mb-4">
+     <h3 id="modal-fase-title" class="text-lg font-bold">Nueva Fase</h3>
+     <button id="modal-fase-close" type="button" class="text-gray-400 hover:text-gray-700"><i data-lucide="x" style="width:20px;height:20px"></i></button>
+    </div>
+    <form id="form-fase" class="space-y-4">
+     <input type="hidden" id="fs-id" value="">
+     <input type="hidden" id="fs-old-nombre" value="">
+     <div>
+      <label for="fs-nombre" class="block text-sm font-medium mb-1">Nombre de la Fase</label>
+      <input id="fs-nombre" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100 font-bold" readonly required>
+     </div>
+     <div>
+      <label for="fs-descripcion" class="block text-sm font-medium mb-1">Descripción / Notas</label>
+      <textarea id="fs-descripcion" rows="2" placeholder="Ej. Lote inicial de verano..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></textarea>
+     </div>
+
+     <div>
+      <label class="block text-sm font-medium mb-1">Selecciona perfumes, escribe precio y piezas para esta fase de forma independiente:</label>
+      <div id="fase-perfumes-container" class="border border-gray-200 rounded-lg p-3 max-h-60 overflow-y-auto space-y-2 bg-gray-50"></div>
+     </div>
+
+     <div class="flex justify-between items-center bg-gray-100 p-3 rounded-lg">
+      <span class="text-sm font-semibold text-gray-700">Inversión Total de la Fase:</span>
+      <span id="fase-total-inversion" class="text-lg font-bold text-red-600">$0</span>
+     </div>
+
+     <button type="submit" id="fs-submit-btn" class="w-full bg-gray-900 text-white rounded-lg py-2.5 font-medium hover:bg-gray-800">Guardar Fase</button>
+    </form>
+   </div>
+  </div>
+
+  <!-- MODAL: Order / Sale Action -->
+  <div id="modal-order" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+   <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+    <div class="flex justify-between items-center mb-4">
+     <h3 id="modal-order-title" class="text-lg font-bold">Registrar Pedido / Venta</h3>
+     <button id="modal-order-close" type="button" class="text-gray-400 hover:text-gray-700"><i data-lucide="x" style="width:20px;height:20px"></i></button>
+    </div>
+    <form id="form-order" class="space-y-3">
+     <input type="hidden" id="ord-perfume-id" value="">
+     <input type="hidden" id="ord-tipo" value="">
+     <div>
+      <label class="block text-sm font-medium mb-1">Perfume y Presentación</label>
+      <p id="ord-info-label" class="text-sm font-bold text-gray-800 bg-gray-50 p-2 rounded border border-gray-200"></p>
+     </div>
+     <div>
+      <label for="ord-comprador" class="block text-sm font-medium mb-1">Nombre del Comprador</label>
+      <input id="ord-comprador" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Ej. Juan Pérez" required>
+     </div>
+     <div>
+      <label for="ord-fase-select" class="block text-sm font-medium mb-1">Asignar a Fase</label>
+      <select id="ord-fase-select" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></select>
+     </div>
+     <div class="grid grid-cols-2 gap-3">
+      <div>
+       <label for="ord-precio-total" class="block text-sm font-medium mb-1">Precio Total ($)</label>
+       <input id="ord-precio-total" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold" required>
+      </div>
+      <div>
+       <label for="ord-monto-pagado" class="block text-sm font-medium mb-1">Abono Inicial ($)</label>
+       <input id="ord-monto-pagado" type="number" value="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required>
+      </div>
+     </div>
+     <div>
+      <label for="ord-metodo" class="block text-sm font-medium mb-1">Método de Pago</label>
+      <select id="ord-metodo" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+       <option value="Efectivo">Efectivo</option>
+       <option value="Transferencia">Transferencia</option>
+       <option value="Tarjeta">Tarjeta</option>
+       <option value="Mixto">Mixto</option>
+      </select>
+     </div>
+     <button type="submit" class="w-full bg-gray-900 text-white rounded-lg py-2.5 font-medium hover:bg-gray-800 mt-2">Guardar Pedido</button>
+    </form>
+   </div>
+  </div>
+
+  <!-- Lógica y Motor Local -->
+  <script>
+    window.dataSdk = {
+        _handler: null,
+        init(handler) {
+            this._handler = handler;
+            this.notify();
+        },
+        notify() {
+            if (this._handler && typeof this._handler.onDataChanged === 'function') {
+                const data = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
+                this._handler.onDataChanged(data);
+            }
+        },
+        async create(item) {
+            const data = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
+            item.__backendId = 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+            data.push(item);
+            localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(data));
+            this.notify();
+            return { isOk: true };
+        },
+        async update(item) {
+            const data = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
+            const index = data.findIndex(x => x.__backendId === item.__backendId);
+            if (index !== -1) {
+                data[index] = item;
+                localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(data));
+                this.notify();
+            }
+            return { isOk: true };
+        },
+        async delete(item) {
+            let data = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
+            data = data.filter(x => x.__backendId !== item.__backendId);
+            localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(data));
+            this.notify();
+            return { isOk: true };
+        }
+    };
+
+    (function() {
+        let allData = [];
+        let perfumes = [];
+        let fases = [];
+        let fasePerfumes = [];
+        let pedidos = [];
+        let currentCatFilter = 'todos';
+        let currentPendingFilter = 'todos';
+        let currentHistoryFilter = 'todos';
+
+        function formatPrice(v) {
+            try { 
+                return parseInt(v || 0).toLocaleString('es-MX', {maximumFractionDigits: 0}); 
+            } catch(e) { 
+                return '0'; 
+            }
+        }
+
+        // Renderizado del Catálogo de Perfumes
+        function renderPerfumes() {
+            const grid = document.getElementById('perfume-grid');
+            const empty = document.getElementById('empty-perfumes');
+            if (!grid) return;
+
+            let filtered = perfumes;
+            if (currentCatFilter !== 'todos') {
+                filtered = perfumes.filter(p => p.estado === currentCatFilter);
+            }
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            grid.innerHTML = filtered.map(p => {
+                const badgeColor = p.estado === 'Entrega Inmediata' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200';
+                const imgHtml = p.imagen ? `<img src="${p.imagen}" class="w-full h-40 object-contain rounded-lg mb-3 bg-gray-50 border border-gray-100" alt="${p.nombre}">` : `<div class="w-full h-40 flex items-center justify-center bg-gray-100 rounded-lg mb-3 text-gray-400 text-xs">Sin imagen</div>`;
+
+                return `
+                <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-xs px-2.5 py-1 rounded-full border font-medium ${badgeColor}">${p.estado || 'Entrega Inmediata'}</span>
+                            <div class="flex gap-1">
+                                <button onclick="openEditPerfume('${p.__backendId}')" class="p-1.5 text-gray-500 hover:text-gray-900 rounded border border-gray-200 hover:bg-gray-50" title="Editar">✏️</button>
+                                <button onclick="confirmDeletePerfume('${p.__backendId}')" class="p-1.5 text-red-500 hover:text-red-700 rounded border border-red-100 hover:bg-red-50" title="Eliminar">🗑️</button>
+                            </div>
+                        </div>
+                        ${imgHtml}
+                        <h3 class="font-bold text-base text-gray-900 leading-snug">${p.nombre}</h3>
+                        <p class="text-xs font-medium text-gray-500 mb-3">${p.marca}</p>
+                        
+                        <div class="grid grid-cols-2 gap-2 mb-4 text-xs bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                            <div><span class="text-gray-400 block">5ml:</span> <strong class="text-gray-900">$${formatPrice(p.precio_5ml)}</strong></div>
+                            <div><span class="text-gray-400 block">10ml:</span> <strong class="text-gray-900">$${formatPrice(p.precio_10ml)}</strong></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2 border-t border-gray-100 pt-3">
+                        <div class="flex gap-1">
+                            <button onclick="openOrderModal('${p.__backendId}', 'Decant 5ml', ${p.precio_5ml})" class="flex-1 bg-gray-900 text-white hover:bg-gray-800 text-xs py-1.5 px-2 rounded font-medium">Vender 5ml</button>
+                            <button onclick="openOrderModal('${p.__backendId}', 'Decant 10ml', ${p.precio_10ml})" class="flex-1 bg-gray-900 text-white hover:bg-gray-800 text-xs py-1.5 px-2 rounded font-medium">Vender 10ml</button>
+                        </div>
+                        <button onclick="openOrderModal('${p.__backendId}', 'Botella Completa', ${p.precio_botella || 850})" class="w-full border border-gray-300 hover:bg-gray-100 text-xs py-1.5 px-2 rounded font-medium text-gray-700">Vender Botella Completa</button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // Renderizado de Pedidos Pendientes
+        function renderPendingOrders() {
+            const tbody = document.getElementById('pending-tbody');
+            const empty = document.getElementById('empty-pending');
+            const alertBox = document.getElementById('pending-alert');
+            const countSpan = document.getElementById('pending-count');
+            if (!tbody) return;
+
+            let pendings = pedidos.filter(x => x.estado === 'Pendiente');
+            countSpan.textContent = pendings.length;
+            if (pendings.length > 0) {
+                alertBox.classList.remove('hidden');
+            } else {
+                alertBox.classList.add('hidden');
+            }
+
+            if (currentPendingFilter !== 'todos') {
+                pendings = pendings.filter(x => x.tipo === currentPendingFilter);
+            }
+
+            if (pendings.length === 0) {
+                tbody.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            tbody.innerHTML = pendings.map(o => {
+                const resto = o.precio_total - o.monto_pagado;
+                return `
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="px-4 py-3 font-semibold text-gray-900">${o.comprador}</td>
+                    <td class="px-4 py-3 text-gray-700">${o.perfume_nombre}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full text-xs bg-gray-100 font-medium">${o.tipo}</span></td>
+                    <td class="px-4 py-3 font-semibold text-gray-600">${o.fase_nombre || 'F1'}</td>
+                    <td class="px-4 py-3 text-xs">
+                        <div>Pagado: <strong class="text-emerald-600">$${formatPrice(o.monto_pagado)}</strong> / Total: <strong>$${formatPrice(o.precio_total)}</strong></div>
+                        <div class="text-gray-400">Resta: $${formatPrice(resto)} (${o.metodo_pago})</div>
+                    </td>
+                    <td class="px-4 py-3 flex gap-2 items-center">
+                        <button onclick="payRestOrder('${o.__backendId}')" class="px-2.5 py-1 text-xs rounded bg-emerald-600 text-white hover:bg-emerald-700 font-medium">Liquidar</button>
+                        <button onclick="deleteOrder('${o.__backendId}')" class="px-2 py-1 text-xs rounded border border-red-200 text-red-500 hover:bg-red-50">🗑️</button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        // Renderizado del Historial de Ventas
+        function renderHistory() {
+            const tbody = document.getElementById('history-tbody');
+            const empty = document.getElementById('empty-history');
+            const totalRev = document.getElementById('total-revenue');
+            if (!tbody) return;
+
+            let historyList = pedidos;
+            if (currentHistoryFilter !== 'todos') {
+                historyList = pedidos.filter(x => x.fase_nombre === currentHistoryFilter);
+            }
+
+            let sumRev = 0;
+            historyList.forEach(h => {
+                sumRev += Number(h.monto_pagado || 0);
+            });
+            totalRev.textContent = `$${formatPrice(sumRev)}`;
+
+            if (historyList.length === 0) {
+                tbody.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            tbody.innerHTML = historyList.map(h => {
+                const statusBadge = h.estado === 'Liquidado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200';
+                return `
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="px-4 py-3 font-semibold text-gray-900">${h.comprador}</td>
+                    <td class="px-4 py-3 text-gray-700">${h.perfume_nombre}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full text-xs bg-gray-100 font-medium">${h.tipo}</span></td>
+                    <td class="px-4 py-3 font-semibold text-gray-600">${h.fase_nombre || 'F1'}</td>
+                    <td class="px-4 py-3 text-xs">
+                        <div>Abonado: <strong class="text-gray-900">$${formatPrice(h.monto_pagado)}</strong> (Total: $${formatPrice(h.precio_total)})</div>
+                        <div class="text-gray-400">Método: ${h.metodo_pago}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="px-2.5 py-1 rounded-full text-xs border font-medium ${statusBadge}">${h.estado}</span>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        // Renderizado de Fases
+        function renderFases() {
+            const grid = document.getElementById('fases-grid');
+            const empty = document.getElementById('empty-fases');
+            const filterButtonsContainer = document.getElementById('history-filter-buttons');
+            if (!grid) return;
+
+            // Actualizar botones de filtro en historial
+            if (filterButtonsContainer) {
+                let filterHtml = `<button data-history-filter="todos" class="history-filter-btn px-3 py-1 text-xs rounded-full border border-gray-300 ${currentHistoryFilter === 'todos' ? 'bg-gray-900 text-white font-medium' : 'hover:bg-gray-100'}">Todas</button>`;
+                fases.forEach(f => {
+                    const isActive = currentHistoryFilter === f.nombre;
+                    filterHtml += `<button data-history-filter="${f.nombre}" class="history-filter-btn px-3 py-1 text-xs rounded-full border border-gray-300 ${isActive ? 'bg-gray-900 text-white font-medium' : 'hover:bg-gray-100'}">${f.nombre}</button>`;
+                });
+                filterButtonsContainer.innerHTML = filterHtml;
+            }
+
+            if (fases.length === 0) {
+                grid.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            grid.innerHTML = fases.map(f => {
+                const itemsThisPhase = fasePerfumes.filter(fp => fp.fase_nombre === f.nombre);
+                let invTotal = 0;
+                
+                const itemsHtml = itemsThisPhase.map(fp => {
+                    const subtotal = (fp.precio_botella || 0) * (fp.stock || 0);
+                    invTotal += subtotal;
+                    return `<li class="flex justify-between text-xs py-1 border-b border-gray-100">
+                        <span>${fp.perfume_nombre || 'Perfume'} (${fp.stock || 0} pzas)</span>
+                        <span class="font-bold">$${formatPrice(subtotal)}</span>
+                    </li>`;
+                }).join('') || '<p class="text-xs text-gray-400 italic">Sin perfumes en esta fase</p>';
+
+                return `
+                <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h3 class="font-bold text-lg text-gray-900">${f.nombre}</h3>
+                            <p class="text-xs text-gray-500">${f.descripcion || 'Sin descripción'}</p>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="openEditFase('${f.__backendId}')" class="text-xs border border-gray-200 rounded px-2 py-1 hover:bg-gray-50">✏️</button>
+                            <button onclick="confirmDeleteFase('${f.__backendId}')" class="text-xs border border-red-100 text-red-500 rounded px-2 py-1 hover:bg-red-50">❌</button>
+                        </div>
+                    </div>
+                    <div class="border-t border-gray-100 pt-3 mb-3 flex-1">
+                        <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Perfumes Asignados:</p>
+                        <ul class="space-y-1">${itemsHtml}</ul>
+                    </div>
+                    <div class="border-t border-gray-100 pt-3 flex justify-between items-center text-sm font-bold">
+                        <span class="text-gray-600">Inversión Total:</span>
+                        <span class="text-red-600">$${formatPrice(invTotal)}</span>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function renderFasePerfumeCheckboxes(selectedFaseNombre = '') {
+            const container = document.getElementById('fase-perfumes-container');
+            if (!container) return;
+
+            if (perfumes.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-400 italic text-center py-2">No hay perfumes registrados todavía. Añade algunos primero.</p>';
+                document.getElementById('fase-total-inversion').textContent = '$0';
+                return;
+            }
+
+            const itemsEnEstaFase = fasePerfumes.filter(fp => fp.fase_nombre === selectedFaseNombre);
+
+            container.innerHTML = perfumes.map(p => {
+                const relacion = itemsEnEstaFase.find(fp => fp.perfume_id === p.__backendId);
+                const isInFase = !!relacion;
+                
+                const cost = isInFase ? relacion.precio_botella : (p.precio_botella || '');
+                const stock = isInFase ? relacion.stock : (p.stock || '');
+                
+                return `
+                    <div class="flex items-center justify-between bg-white p-2.5 rounded border border-gray-200 text-xs gap-2">
+                        <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-[120px]">
+                            <input type="checkbox" class="fase-perfume-checkbox rounded border-gray-300" data-perfume-id="${p.__backendId}" ${isInFase ? 'checked' : ''} onchange="window.calculateFaseInversion()">
+                            <span class="font-bold text-gray-900">${p.nombre} <span class="text-gray-400 font-normal">(${p.marca})</span></span>
+                        </label>
+                        <div class="flex items-center gap-1">
+                            <span class="text-gray-500">Precio:</span>
+                            <input type="number" placeholder="Ej. 850" value="${cost}" class="fase-perfume-precio w-20 border border-gray-300 rounded px-1.5 py-1 text-center text-xs font-semibold" data-perfume-id="${p.__backendId}" oninput="window.calculateFaseInversion()">
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="text-gray-500">Pzas:</span>
+                            <input type="number" min="1" placeholder="Ej. 2" value="${stock}" class="fase-perfume-stock w-14 border border-gray-300 rounded px-1.5 py-1 text-center text-xs font-semibold" data-perfume-id="${p.__backendId}" oninput="window.calculateFaseInversion()">
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            window.calculateFaseInversion();
+        }
+
+        window.calculateFaseInversion = function() {
+            let total = 0;
+            document.querySelectorAll('#fase-perfumes-container > div').forEach(row => {
+                const chk = row.querySelector('.fase-perfume-checkbox');
+                const precioInput = row.querySelector('.fase-perfume-precio');
+                const qtyInput = row.querySelector('.fase-perfume-stock');
+                if (chk && chk.checked) {
+                    const cost = Number(precioInput.value) || 0;
+                    const qty = Number(qtyInput.value) || 0;
+                    total += cost * qty;
+                }
+            });
+            document.getElementById('fase-total-inversion').textContent = `$${formatPrice(total)}`;
+        };
+
+        // SDK de Datos Local
+        window.dataSdk.init({
+            onDataChanged(items) {
+                allData = items;
+                perfumes = items.filter(x => x.tipo === 'perfume' || (!x.tipo && x.nombre && x.precio_botella !== undefined));
+                fases = items.filter(x => x.tipo === 'fase');
+                fasePerfumes = items.filter(x => x.tipo === 'fase_perfume');
+                pedidos = items.filter(x => x.tipo === 'pedido');
+
+                renderPerfumes();
+                renderPendingOrders();
+                renderHistory();
+                renderFases();
+            }
+        });
+
+        // Event Listeners Navegación y Vistas
+        document.getElementById('btn-show-fases').addEventListener('click', () => {
+            document.getElementById('view-catalog').classList.add('hidden');
+            document.getElementById('view-history').classList.add('hidden');
+            document.getElementById('view-fases').classList.remove('hidden');
+        });
+        document.getElementById('btn-back-catalog-from-fases').addEventListener('click', () => {
+            document.getElementById('view-fases').classList.add('hidden');
+            document.getElementById('view-catalog').classList.remove('hidden');
+        });
+        document.getElementById('btn-show-history').addEventListener('click', () => {
+            document.getElementById('view-catalog').classList.add('hidden');
+            document.getElementById('view-fases').classList.add('hidden');
+            document.getElementById('view-history').classList.remove('hidden');
+        });
+        document.getElementById('btn-back-catalog').addEventListener('click', () => {
+            document.getElementById('view-history').classList.add('hidden');
+            document.getElementById('view-catalog').classList.remove('hidden');
+        });
+
+        // Filtros Catálogo
+        document.querySelectorAll('.cat-filter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.cat-filter-btn').forEach(b => {
+                    b.classList.remove('bg-gray-900', 'text-white', 'font-medium');
+                    b.classList.add('hover:bg-gray-100');
+                });
+                e.target.classList.add('bg-gray-900', 'text-white', 'font-medium');
+                e.target.classList.remove('hover:bg-gray-100');
+                currentCatFilter = e.target.getAttribute('data-cat-filter');
+                renderPerfumes();
+            });
+        });
+
+        // Filtros Pedidos Pendientes
+        document.querySelectorAll('#filter-buttons .filter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('#filter-buttons .filter-btn').forEach(b => {
+                    b.classList.remove('bg-gray-900', 'text-white');
+                    b.classList.add('hover:bg-gray-100');
+                });
+                e.target.classList.add('bg-gray-900', 'text-white');
+                e.target.classList.remove('hover:bg-gray-100');
+                currentPendingFilter = e.target.getAttribute('data-filter');
+                renderPendingOrders();
+            });
+        });
+
+        // Delegación de eventos para Historial de filtros por fase
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('history-filter-btn')) {
+                document.querySelectorAll('.history-filter-btn').forEach(b => {
+                    b.classList.remove('bg-gray-900', 'text-white', 'font-medium');
+                    b.classList.add('hover:bg-gray-100');
+                });
+                e.target.classList.add('bg-gray-900', 'text-white', 'font-medium');
+                e.target.classList.remove('hover:bg-gray-100');
+                currentHistoryFilter = e.target.getAttribute('data-history-filter');
+                renderHistory();
+            }
+        });
+
+        // MODAL PERFUME (Añadir / Editar)
+        document.getElementById('btn-add-perfume').addEventListener('click', () => {
+            document.getElementById('modal-perfume-title').textContent = 'Nuevo Perfume';
+            document.getElementById('pf-id').value = '';
+            document.getElementById('form-perfume').reset();
+            document.getElementById('pf-imagen-base64').value = '';
+            document.getElementById('pf-image-preview-container').classList.add('hidden');
+            document.getElementById('modal-perfume').classList.remove('hidden');
+        });
+
+        document.getElementById('modal-perfume-close').addEventListener('click', () => {
+            document.getElementById('modal-perfume').classList.add('hidden');
+        });
+
+        document.getElementById('pf-image-file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    document.getElementById('pf-imagen-base64').value = evt.target.result;
+                    document.getElementById('pf-image-preview').src = evt.target.result;
+                    document.getElementById('pf-image-preview-container').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('form-perfume').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('pf-id').value;
+            const nombre = document.getElementById('pf-nombre-input').value.trim();
+            const marca = document.getElementById('pf-marca-input').value.trim();
+            const estado = document.getElementById('pf-estado').value;
+            const precio_5ml = Number(document.getElementById('pf-5ml').value) || 120;
+            const precio_10ml = Number(document.getElementById('pf-10ml').value) || 180;
+            const precio_botella = Number(document.getElementById('pf-botella').value) || 850;
+            const stock = Number(document.getElementById('pf-stock').value) || 1;
+            let imagen = document.getElementById('pf-imagen-base64').value;
+
+            if (id) {
+                const perfumeObj = perfumes.find(p => p.__backendId === id);
+                if (perfumeObj) {
+                    if (!imagen) imagen = perfumeObj.imagen || '';
+                    perfumeObj.nombre = nombre;
+                    perfumeObj.marca = marca;
+                    perfumeObj.estado = estado;
+                    perfumeObj.precio_5ml = precio_5ml;
+                    perfumeObj.precio_10ml = precio_10ml;
+                    perfumeObj.precio_botella = precio_botella;
+                    perfumeObj.stock = stock;
+                    perfumeObj.imagen = imagen;
+                    await window.dataSdk.update(perfumeObj);
+                }
+            } else {
+                const nuevoPerfume = {
+                    tipo: 'perfume',
+                    nombre,
+                    marca,
+                    estado,
+                    precio_5ml,
+                    precio_10ml,
+                    precio_botella,
+                    stock,
+                    imagen
+                };
+                await window.dataSdk.create(nuevoPerfume);
+            }
+            document.getElementById('modal-perfume').classList.add('hidden');
+        });
+
+        window.openEditPerfume = function(backendId) {
+            const p = perfumes.find(x => x.__backendId === backendId);
+            if (!p) return;
+            document.getElementById('modal-perfume-title').textContent = 'Editar Perfume';
+            document.getElementById('pf-id').value = p.__backendId;
+            document.getElementById('pf-nombre-input').value = p.nombre || '';
+            document.getElementById('pf-marca-input').value = p.marca || '';
+            document.getElementById('pf-estado').value = p.estado || 'Entrega Inmediata';
+            document.getElementById('pf-5ml').value = p.precio_5ml || 120;
+            document.getElementById('pf-10ml').value = p.precio_10ml || 180;
+            document.getElementById('pf-botella').value = p.precio_botella || 850;
+            document.getElementById('pf-stock').value = p.stock || 1;
+            document.getElementById('pf-imagen-base64').value = p.imagen || '';
+            if (p.imagen) {
+                document.getElementById('pf-image-preview').src = p.imagen;
+                document.getElementById('pf-image-preview-container').classList.remove('hidden');
+            } else {
+                document.getElementById('pf-image-preview-container').classList.add('hidden');
+            }
+            document.getElementById('modal-perfume').classList.remove('hidden');
+        };
+
+        window.confirmDeletePerfume = async function(backendId) {
+            if (confirm('¿Estás seguro de eliminar este perfume?')) {
+                const p = perfumes.find(x => x.__backendId === backendId);
+                if (p) await window.dataSdk.delete(p);
+            }
+        };
+
+        // MODAL ORDEN / VENTA
+        window.openOrderModal = function(perfumeId, tipo, precioSugerido) {
+            const p = perfumes.find(x => x.__backendId === perfumeId);
+            if (!p) return;
+            document.getElementById('ord-perfume-id').value = perfumeId;
+            document.getElementById('ord-tipo').value = tipo;
+            document.getElementById('ord-info-label').textContent = `${p.nombre} - ${tipo}`;
+            document.getElementById('ord-comprador').value = '';
+            document.getElementById('ord-precio-total').value = precioSugerido;
+            document.getElementById('ord-monto-pagado').value = precioSugerido;
+            document.getElementById('ord-metodo').value = 'Efectivo';
+
+            // Rellenar selector de fases
+            const faseSelect = document.getElementById('ord-fase-select');
+            if (fases.length > 0) {
+                faseSelect.innerHTML = fases.map(f => `<option value="${f.nombre}">${f.nombre}</option>`).join('');
+            } else {
+                faseSelect.innerHTML = `<option value="F1">F1 (Por defecto)</option>`;
+            }
+
+            document.getElementById('modal-order').classList.remove('hidden');
+        };
+
+        document.getElementById('modal-order-close').addEventListener('click', () => {
+            document.getElementById('modal-order').classList.add('hidden');
+        });
+
+        document.getElementById('form-order').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const perfumeId = document.getElementById('ord-perfume-id').value;
+            const tipo = document.getElementById('ord-tipo').value;
+            const p = perfumes.find(x => x.__backendId === perfumeId);
+            const comprador = document.getElementById('ord-comprador').value.trim();
+            const faseNombre = document.getElementById('ord-fase-select').value;
+            const precioTotal = Number(document.getElementById('ord-precio-total').value) || 0;
+            const montoPagado = Number(document.getElementById('ord-monto-pagado').value) || 0;
+            const metodoPago = document.getElementById('ord-metodo').value;
+            const estado = montoPagado >= precioTotal ? 'Liquidado' : 'Pendiente';
+
+            const nuevoPedido = {
+                tipo: 'pedido',
+                perfume_id: perfumeId,
+                perfume_nombre: p ? p.nombre : 'Perfume',
+                tipo_pedido: tipo,
+                comprador,
+                fase_nombre: faseNombre,
+                precio_total: precioTotal,
+                monto_pagado: montoPagado,
+                metodo_pago: metodoPago,
+                estado
+            };
+            await window.dataSdk.create(nuevoPedido);
+            document.getElementById('modal-order').classList.add('hidden');
+        });
+
+        window.payRestOrder = async function(backendId) {
+            const o = pedidos.find(x => x.__backendId === backendId);
+            if (o) {
+                o.monto_pagado = o.precio_total;
+                o.estado = 'Liquidado';
+                await window.dataSdk.update(o);
+            }
+        };
+
+        window.deleteOrder = async function(backendId) {
+            if (confirm('¿Eliminar este registro?')) {
+                const o = pedidos.find(x => x.__backendId === backendId);
+                if (o) await window.dataSdk.delete(o);
+            }
+        };
+
+        // MODAL FASE (Añadir / Editar)
+        document.getElementById('btn-add-fase').addEventListener('click', () => {
+            const nextIndex = fases.length + 1;
+            const faseName = 'F' + nextIndex;
+            document.getElementById('modal-fase-title').textContent = 'Nueva Fase (' + faseName + ')';
+            document.getElementById('fs-id').value = '';
+            document.getElementById('fs-nombre').value = faseName;
+            document.getElementById('fs-old-nombre').value = '';
+            document.getElementById('fs-descripcion').value = '';
+            renderFasePerfumeCheckboxes(faseName);
+            document.getElementById('modal-fase').classList.remove('hidden');
+        });
+
+        document.getElementById('modal-fase-close').addEventListener('click', () => {
+            document.getElementById('modal-fase').classList.add('hidden');
+        });
+
+        document.getElementById('form-fase').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('fs-id').value;
+            const nombre = document.getElementById('fs-nombre').value;
+            const oldNombre = document.getElementById('fs-old-nombre').value || nombre;
+            const descripcion = document.getElementById('fs-descripcion').value.trim();
+
+            if (id) {
+                const existingFase = fases.find(x => x.__backendId === id);
+                if (existingFase) {
+                    existingFase.descripcion = descripcion;
+                    await window.dataSdk.update(existingFase);
+                }
+            } else {
+                const nuevaFase = {
+                    tipo: 'fase',
+                    nombre,
+                    descripcion
+                };
+                await window.dataSdk.create(nuevaFase);
+            }
+
+            let currentAll = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
+            currentAll = currentAll.filter(x => !(x.tipo === 'fase_perfume' && x.fase_nombre === oldNombre));
+
+            document.querySelectorAll('#fase-perfumes-container > div').forEach(row => {
+                const chk = row.querySelector('.fase-perfume-checkbox');
+                if (chk && chk.checked) {
+                    const perfumeId = chk.getAttribute('data-perfume-id');
+                    const precioBotella = Number(row.querySelector('.fase-perfume-precio').value) || 0;
+                    const stock = Number(row.querySelector('.fase-perfume-stock').value) || 0;
+                    const perfObj = perfumes.find(p => p.__backendId === perfumeId);
+
+                    currentAll.push({
+                        tipo: 'fase_perfume',
+                        fase_nombre: nombre,
+                        perfume_id: perfumeId,
+                        perfume_nombre: perfObj ? perfObj.nombre : '',
+                        precio_botella: precioBotella,
+                        stock: stock,
+                        __backendId: 'fp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)
+                    });
+                }
+            });
+
+            localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(currentAll));
+            window.dataSdk.notify();
+            document.getElementById('modal-fase').classList.add('hidden');
+        });
+
+        window.openEditFase = function(backendId) {
+            const fase = fases.find(x => x.__backendId === backendId);
+            if (!fase) return;
+            document.getElementById('modal-fase-title').textContent = 'Editar Fase (' + fase.nombre + ')';
+            document.getElementById('fs-id').value = fase.__backendId;
+            document.getElementById('fs-nombre').value = fase.nombre;
+            document.getElementById('fs-old-nombre').value = fase.nombre;
+            document.getElementById('fs-descripcion').value = fase.descripcion || '';
+            renderFasePerfumeCheckboxes(fase.nombre);
+            document.getElementById('modal-fase').classList.remove('hidden');
+        };
+
+        window.confirmDeleteFase = async function(backendId) {
+            if (confirm('¿Estás seguro de eliminar esta fase y sus asociaciones?')) {
+                const fase = fases.find(x => x.__backendId === backendId);
+                if (fase) {
+                    let currentAll = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
+                    currentAll = currentAll.filter(x => x.__backendId !== backendId && !(x.tipo === 'fase_perfume' && x.fase_nombre === fase.nombre));
+                    localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(currentAll));
+                    window.dataSdk.notify();
+                }
+            }
+        };
+
+        document.getElementById('btn-reset-fases').addEventListener('click', async () => {
+            if (confirm('¿Deseas eliminar todas las fases creadas?')) {
+                let currentAll = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
+                currentAll = currentAll.filter(x => x.tipo !== 'fase' && x.tipo !== 'fase_perfume');
+                localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(currentAll));
+                window.dataSdk.notify();
+            }
+        });
+
+        document.getElementById('btn-reset-history').addEventListener('click', async () => {
+            if (confirm('¿Estás seguro de limpiar todo el historial de ventas?')) {
+                let currentAll = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
+                currentAll = currentAll.filter(x => x.tipo !== 'pedido');
+                localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(currentAll));
+                window.dataSdk.notify();
+            }
+        });
+
+        // Backup Export / Import
+        document.getElementById('btn-export-backup').addEventListener('click', () => {
+            const data = localStorage.getItem('eli_eli_perfumes_data') || '[]';
+            const blob = new Blob([data], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'eli_eli_respaldo_' + new Date().toISOString().slice(0, 10) + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        document.getElementById('btn-import-backup').addEventListener('click', () => {
+            document.getElementById('import-file-input').click();
+        });
+
+        document.getElementById('import-file-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    try {
+                        const parsed = JSON.parse(evt.target.result);
+                        if (Array.isArray(parsed)) {
+                            localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(parsed));
+                            window.dataSdk.notify();
+                            alert('Respaldo cargado correctamente.');
+                        } else {
+                            alert('El archivo no tiene el formato correcto.');
+                        }
+                    } catch(err) {
+                        alert('Error al leer el archivo JSON.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        lucide.createIcons();
+    })();
+  </script>
+ </body>
+</html>

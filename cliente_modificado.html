@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Eli & Eli Perfumes y Decants - Catálogo</title>
+
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <style>
+        body {
+            font-family: 'DM Sans', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen w-full bg-gray-50">
+
+    <!-- HEADER -->
+    <header class="sticky top-0 z-30 border-b border-gray-200 backdrop-blur-sm bg-white/90 shadow-sm">
+
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+
+            <div class="flex items-center gap-3">
+
+                <h1 class="text-lg md:text-xl font-bold text-gray-900">
+                    Eli & Eli Perfumes y Decants
+                </h1>
+
+            </div>
+
+            <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-medium">
+                Catálogo Oficial
+            </span>
+
+        </div>
+
+    </header>
+
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+
+        <section id="view-catalog">
+
+            <div class="mb-6 text-center">
+
+                <h2 class="text-2xl font-bold text-gray-900">
+                    Nuestros Perfumes y Decants
+                </h2>
+
+                <p class="text-sm text-gray-500 mt-1">
+                    Elige tu fragancia favorita y apártala al instante.
+                    (Haz clic en la imagen para ver la descripción)
+                </p>
+
+            </div>
+
+
+            <!-- FILTROS -->
+            <div class="flex flex-col items-center gap-3 mb-8">
+
+                <div class="inline-flex p-1 bg-gray-200/80 rounded-xl gap-1 overflow-x-auto max-w-full">
+
+                    <button
+                        data-availability-filter="todos"
+                        class="availability-tab px-3.5 py-1.5 text-xs md:text-sm font-semibold rounded-lg bg-gray-900 text-white shadow-sm transition-all"
+                    >
+                        Todos
+                    </button>
+
+                    <button
+                        data-availability-filter="Entrega Inmediata"
+                        class="availability-tab px-3.5 py-1.5 text-xs md:text-sm font-semibold rounded-lg text-gray-700 hover:text-gray-900 transition-all"
+                    >
+                        Entrega Inmediata
+                    </button>
+
+                    <button
+                        data-availability-filter="Sobre Pedido"
+                        class="availability-tab px-3.5 py-1.5 text-xs md:text-sm font-semibold rounded-lg text-gray-700 hover:text-gray-900 transition-all"
+                    >
+                        Sobre Pedido
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- GRID -->
+            <div
+                id="perfume-grid"
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8"
+            ></div>
+
+
+            <p
+                id="empty-perfumes"
+                class="hidden text-center text-gray-400 py-12"
+            >
+                No hay perfumes disponibles con estos filtros por el momento.
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <!-- MODAL -->
+    <div
+        id="perfume-modal"
+        class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden"
+    >
+
+        <div
+            class="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl relative transform transition-all"
+        >
+
+            <button
+                onclick="closePerfumeModal()"
+                class="absolute top-3 right-3 z-10 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full p-2 transition-colors"
+            >
+
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                    />
+
+                </svg>
+
+            </button>
+
+
+            <div class="max-h-[85vh] overflow-y-auto p-6">
+
+                <div
+                    class="h-56 bg-gray-50 flex items-center justify-center rounded-xl overflow-hidden mb-4 p-2"
+                >
+
+                    <img
+                        id="modal-img"
+                        src=""
+                        class="max-h-full max-w-full object-contain"
+                        alt="Imagen Detalle Perfume"
+                    >
+
+                </div>
+
+
+                <div class="flex gap-2 mb-2">
+
+                    <span
+                        id="modal-disp"
+                        class="px-2.5 py-1 text-xs font-semibold rounded-md border"
+                    ></span>
+
+                </div>
+
+
+                <span
+                    id="modal-brand"
+                    class="text-xs font-semibold text-indigo-600 uppercase tracking-wider"
+                ></span>
+
+
+                <h3
+                    id="modal-title"
+                    class="font-bold text-gray-900 text-xl mb-3"
+                ></h3>
+
+
+                <div
+                    class="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-4"
+                >
+
+                    <h4
+                        class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-1"
+                    >
+                        Descripción y Notas Olfativas:
+                    </h4>
+
+                    <p
+                        id="modal-desc"
+                        class="text-sm text-gray-600 whitespace-pre-line leading-relaxed"
+                    >
+                        Sin descripción disponible.
+                    </p>
+
+                </div>
+
+
+                <button
+                    onclick="closePerfumeModal()"
+                    class="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-2.5 rounded-xl transition-colors text-sm"
+                >
+                    Cerrar
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- SCRIPT -->
+    <script>
+
+        /*
+        ============================================================
+        COMPATIBILIDAD CON DATOS ANTIGUOS
+        ============================================================
+        */
+
+        (function() {
+
+            const oldKey =
+                localStorage.getItem('mcfly_perfumes_data');
+
+            const newKey =
+                localStorage.getItem('eli_eli_perfumes_data');
+
+
+            if (oldKey && !newKey) {
+
+                localStorage.setItem(
+                    'eli_eli_perfumes_data',
+                    oldKey
+                );
+
+            }
+
+        })();
+
+
+
+        /*
+        ============================================================
+        DATA SDK
+        ============================================================
+        */
+
+        window.dataSdk = {
+
+            _handler: null,
+
+
+            init(handler) {
+
+                this._handler = handler;
+
+                this.notify();
+
+
+                window.addEventListener(
+                    'storage',
+                    () => this.notify()
+                );
+
+            },
+
+
+            notify() {
+
+                if (
+                    this._handler &&
+                    typeof this._handler.onDataChanged === 'function'
+                ) {
+
+                    const data =
+                        JSON.parse(
+                            localStorage.getItem(
+                                'eli_eli_perfumes_data'
+                            ) || '[]'
+                        );
+
+
+                    this._handler.onDataChanged(data);
+
+                }
+
+            },
+
+
+            async create(item) {
+
+                const data =
+                    JSON.parse(
+                        localStorage.getItem(
+                            'eli_eli_perfumes_data'
+                        ) || '[]'
+                    );
+
+
+                item.__backendId =
+                    'id_' +
+                    Date.now() +
+                    '_' +
+                    Math.random()
+                        .toString(36)
+                        .substr(2, 5);
+
+
+                data.push(item);
+
+
+                localStorage.setItem(
+                    'eli_eli_perfumes_data',
+                    JSON.stringify(data)
+                );
+
+
+                this.notify();
+
+
+                return {
+                    isOk: true
+                };
+
+            },
+
+
+            async update(item) {
+
+                const data =
+                    JSON.parse(
+                        localStorage.getItem(
+                            'eli_eli_perfumes_data'
+                        ) || '[]'
+                    );
+
+
+                const index =
+                    data.findIndex(
+                        x =>
+                            x.__backendId ===
+                            item.__backendId
+                    );
+
+
+                if (index !== -1) {
+
+                    data[index] = item;
+
+
+                    localStorage.setItem(
+                        'eli_eli_perfumes_data',
+                        JSON.stringify(data)
+                    );
+
+
+                    this.notify();
+
+                }
+
+
+                return {
+                    isOk: true
+                };
+
+            },
+
+
+            async delete(item) {
+
+                let data =
+                    JSON.parse(
+                        localStorage.getItem(
+                            'eli_eli_perfumes_data'
+                        ) || '[]'
+                    );
+
+
+                data =
+                    data.filter(
+                        x =>
+                            x.__backendId !==
+                            item.__backendId
+                    );
+
+
+                localStorage.setItem(
+                    'eli_eli_perfumes_data',
+                    JSON.stringify(data)
+                );
+
+
+                this.notify();
+
+
+                return {
+                    isOk: true
+                };
+
+            }
+
+        };
+
+
+
+        /*
+        ============================================================
+        VARIABLES GLOBALES
+        ============================================================
+        */
+
+        window.globalPerfumesData = [];
+
+        window.fasesData = [];
+
+
+
+        /*
+        ============================================================
+        MODAL DEL PERFUME
+        ============================================================
+        */
+
+        window.openPerfumeModal =
+            function(backendId) {
+
+                const perfume =
+                    window.globalPerfumesData.find(
+                        p =>
+                            p.__backendId ===
+                            backendId
+                    );
+
+
+                if (!perfume)
+                    return;
+
+
+                const imgSource =
+                    perfume.imagen ||
+                    'https://images.pexels.com/photos/15096784/pexels-photo-15096784.jpeg?auto=compress&cs=tinysrgb&w=400';
+
+
+                /*
+                IMPORTANTE:
+                El administrador utiliza "estado".
+                */
+
+                const disp =
+                    perfume.estado ||
+                    'Entrega Inmediata';
+
+
+                const isSobrePedido =
+                    disp === 'Sobre Pedido';
+
+
+
+                document.getElementById(
+                    'modal-img'
+                ).src = imgSource;
+
+
+                document.getElementById(
+                    'modal-brand'
+                ).textContent =
+                    perfume.marca || '';
+
+
+                document.getElementById(
+                    'modal-title'
+                ).textContent =
+                    perfume.nombre || '';
+
+
+                document.getElementById(
+                    'modal-desc'
+                ).textContent =
+                    perfume.descripcion ||
+                    'No hay una descripción detallada registrada para este perfume.';
+
+
+
+                const dispEl =
+                    document.getElementById(
+                        'modal-disp'
+                    );
+
+
+                dispEl.textContent =
+                    disp;
+
+
+                dispEl.className =
+                    `px-2.5 py-1 text-xs font-semibold rounded-md border ${
+                        isSobrePedido
+
+                        ? 'bg-purple-50 text-purple-700 border-purple-200'
+
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    }`;
+
+
+                document.getElementById(
+                    'perfume-modal'
+                ).classList.remove('hidden');
+
+            };
+
+
+
+        /*
+        ============================================================
+        CERRAR MODAL
+        ============================================================
+        */
+
+        window.closePerfumeModal =
+            function() {
+
+                document.getElementById(
+                    'perfume-modal'
+                ).classList.add('hidden');
+
+            };
+
+
+
+        /*
+        ============================================================
+        CATÁLOGO
+        ============================================================
+        */
+
+        (function() {
+
+
+            let currentAvailabilityFilter =
+                'todos';
+
+
+
+            /*
+            ========================================================
+            FORMATEAR PRECIO
+            ========================================================
+            */
+
+            function formatPrice(v) {
+
+                try {
+
+                    return parseInt(
+                        v || 0
+                    ).toLocaleString(
+                        'es-MX'
+                    );
+
+                } catch(e) {
+
+                    return '0';
+
+                }
+
+            }
+
+
+
+            /*
+            ========================================================
+            OBTENER PRECIO
+            ========================================================
+            */
+
+            function getPerfumePrice(
+                perfume,
+                tipo
+            ) {
+
+                if (
+                    tipo ===
+                    'Decant 5ml'
+                ) {
+
+                    return perfume.precio_5ml || 0;
+
+                }
+
+
+                if (
+                    tipo ===
+                    'Decant 10ml'
+                ) {
+
+                    return perfume.precio_10ml || 0;
+
+                }
+
+
+                return perfume.precio_botella || 0;
+
+            }
+
+
+
+            /*
+            ========================================================
+            RENDERIZAR PERFUMES
+            ========================================================
+            */
+
+            function renderPerfumes() {
+
+                const grid =
+                    document.getElementById(
+                        'perfume-grid'
+                    );
+
+
+                const empty =
+                    document.getElementById(
+                        'empty-perfumes'
+                    );
+
+
+                if (!grid || !empty)
+                    return;
+
+
+
+                /*
+                IMPORTANTE:
+                AQUÍ TAMBIÉN USAMOS "estado".
+                */
+
+                const filteredPerfumes =
+                    window.globalPerfumesData.filter(
+                        p => {
+
+                            const disp =
+                                p.estado ||
+                                'Entrega Inmediata';
+
+
+                            const matchDisp =
+                                currentAvailabilityFilter ===
+                                'todos' ||
+
+                                disp ===
+                                currentAvailabilityFilter;
+
+
+                            return matchDisp;
+
+                        }
+                    );
+
+
+
+                if (
+                    filteredPerfumes.length === 0
+                ) {
+
+                    grid.innerHTML = '';
+
+                    empty.classList.remove(
+                        'hidden'
+                    );
+
+                    return;
+
+                }
+
+
+
+                empty.classList.add(
+                    'hidden'
+                );
+
+
+
+                grid.innerHTML =
+                    filteredPerfumes.map(
+                        p => {
+
+
+                            const imgSource =
+                                p.imagen ||
+                                'https://images.pexels.com/photos/15096784/pexels-photo-15096784.jpeg?auto=compress&cs=tinysrgb&w=400';
+
+
+                            /*
+                            USAMOS estado
+                            */
+
+                            const disp =
+                                p.estado ||
+                                'Entrega Inmediata';
+
+
+                            const isSobrePedido =
+                                disp === 'Sobre Pedido';
+
+
+
+                            const dispBadgeClass =
+                                isSobrePedido
+
+                                ? 'bg-purple-50 text-purple-700 border-purple-200'
+
+                                : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+
+
+
+                            return `
+
+                            <div
+                                class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col transition-all hover:shadow-md relative"
+                            >
+
+
+                                <!-- IMAGEN -->
+
+                                <div
+                                    onclick="openPerfumeModal('${p.__backendId}')"
+                                    class="h-48 bg-gray-50 flex items-center justify-center overflow-hidden p-3 relative cursor-pointer group"
+                                >
+
+                                    <div
+                                        class="absolute top-3 left-3 flex gap-1.5 z-10"
+                                    >
+
+                                        <span
+                                            class="px-2.5 py-1 text-xs font-semibold rounded-md border ${dispBadgeClass}"
+                                        >
+                                            ${disp}
+                                        </span>
+
+                                    </div>
+
+
+                                    <img
+                                        src="${imgSource}"
+                                        class="max-h-full max-w-full object-contain rounded-lg group-hover:scale-105 transition-transform duration-300"
+                                        alt="${p.nombre || 'Perfume'}"
+                                    >
+
+
+                                    <div
+                                        class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                    >
+
+                                        <span
+                                            class="bg-white/90 text-gray-900 text-xs font-semibold px-3 py-1 rounded-full shadow-sm"
+                                        >
+                                            Ver Descripción
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+
+
+                                <!-- INFORMACIÓN -->
+
+                                <div
+                                    class="p-5 flex-1 flex flex-col"
+                                >
+
+                                    <div class="mb-3">
+
+                                        <span
+                                            class="text-xs font-semibold text-indigo-600 uppercase tracking-wider"
+                                        >
+                                            ${p.marca || ''}
+                                        </span>
+
+
+                                        <h3
+                                            class="font-bold text-gray-900 text-lg"
+                                        >
+                                            ${p.nombre || ''}
+                                        </h3>
+
+                                    </div>
+
+
+
+                                    <!-- PRECIOS -->
+
+                                    <ul
+                                        class="text-sm space-y-1.5 mb-5 bg-gray-50 p-3 rounded-xl border border-gray-100"
+                                    >
+
+
+                                        ${
+                                            isSobrePedido
+
+                                            ? `
+
+                                            <!-- SOBRE PEDIDO -->
+
+                                            <li
+                                                class="flex justify-between items-center text-gray-600"
+                                            >
+
+                                                <span>
+                                                    Decant 5ml
+                                                </span>
+
+                                                <span
+                                                    class="font-bold text-gray-900"
+                                                >
+                                                    ---
+                                                </span>
+
+                                            </li>
+
+
+                                            <li
+                                                class="flex justify-between items-center text-gray-600"
+                                            >
+
+                                                <span>
+                                                    Decant 10ml
+                                                </span>
+
+                                                <span
+                                                    class="font-bold text-gray-900"
+                                                >
+                                                    ---
+                                                </span>
+
+                                            </li>
+
+                                            `
+
+                                            :
+
+                                            `
+
+                                            <!-- ENTREGA INMEDIATA -->
+
+                                            <li
+                                                class="flex justify-between items-center text-gray-600"
+                                            >
+
+                                                <span>
+                                                    Decant 5ml
+                                                </span>
+
+                                                <span
+                                                    class="font-bold text-gray-900"
+                                                >
+                                                    $${formatPrice(
+                                                        p.precio_5ml
+                                                    )} MXN
+                                                </span>
+
+                                            </li>
+
+
+                                            <li
+                                                class="flex justify-between items-center text-gray-600"
+                                            >
+
+                                                <span>
+                                                    Decant 10ml
+                                                </span>
+
+                                                <span
+                                                    class="font-bold text-gray-900"
+                                                >
+                                                    $${formatPrice(
+                                                        p.precio_10ml
+                                                    )} MXN
+                                                </span>
+
+                                            </li>
+
+                                            `
+                                        }
+
+
+
+                                        <!-- BOTELLA -->
+
+                                        <li
+                                            class="flex justify-between items-center text-gray-600"
+                                        >
+
+                                            <span>
+                                                Botella Completa
+                                            </span>
+
+                                            <span
+                                                class="font-bold text-gray-900"
+                                            >
+
+                                                ${
+                                                    isSobrePedido
+
+                                                    ? '---'
+
+                                                    : '$' +
+                                                      formatPrice(
+                                                          p.precio_botella
+                                                      ) +
+                                                      ' MXN'
+                                                }
+
+                                            </span>
+
+                                        </li>
+
+
+
+                                        ${
+                                            isSobrePedido
+
+                                            ? `
+
+                                            <li
+                                                class="text-xs text-purple-700 font-medium bg-purple-50 p-2 rounded-lg border border-purple-100 text-center"
+                                            >
+                                                Precio bajo pedido
+                                            </li>
+
+                                            `
+
+                                            : ''
+                                        }
+
+                                    </ul>
+
+
+
+                                    <!-- FORMULARIO -->
+
+                                    <form
+                                        class="mt-auto flex flex-col gap-2.5"
+                                        onsubmit="registerClientOrder(event, '${p.__backendId}')"
+                                    >
+
+
+                                        <!-- NOMBRE -->
+
+                                        <div>
+
+                                            <label
+                                                class="block text-xs font-medium text-gray-600 mb-1"
+                                            >
+                                                Tu Nombre Completo
+                                            </label>
+
+
+                                            <input
+                                                type="text"
+                                                placeholder="Ej. María Pérez"
+                                                class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                                                required
+                                            >
+
+                                        </div>
+
+
+
+                                        <!-- TELEFONO -->
+
+                                        <div>
+
+                                            <label
+                                                class="block text-xs font-medium text-gray-600 mb-1"
+                                            >
+                                                Número de contacto
+                                            </label>
+
+
+                                            <input
+                                                type="tel"
+                                                placeholder="Ej. 81 1234 5678"
+                                                class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                                                required
+                                            >
+
+                                        </div>
+
+
+
+                                        <!-- TIPO DE VENTA -->
+
+                                        <div
+                                            class="flex gap-2"
+                                        >
+
+                                            <select
+                                                class="flex-1 border border-gray-300 rounded-xl px-2.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+                                            >
+
+
+                                                ${
+                                                    isSobrePedido
+
+                                                    ? `
+
+                                                    <option value="Botella Completa">
+
+                                                        Botella Completa
+                                                        (Precio bajo pedido)
+
+                                                    </option>
+
+                                                    `
+
+                                                    :
+
+                                                    `
+
+                                                    <option value="Decant 5ml">
+
+                                                        5ml
+                                                        ($${formatPrice(
+                                                            p.precio_5ml
+                                                        )})
+
+                                                    </option>
+
+
+                                                    <option value="Decant 10ml">
+
+                                                        10ml
+                                                        ($${formatPrice(
+                                                            p.precio_10ml
+                                                        )})
+
+                                                    </option>
+
+
+                                                    <option value="Botella Completa">
+
+                                                        Botella
+                                                        ($${formatPrice(
+                                                            p.precio_botella
+                                                        )})
+
+                                                    </option>
+
+                                                    `
+                                                }
+
+                                            </select>
+
+
+
+                                            <button
+                                                type="submit"
+                                                class="bg-gray-900 text-white px-4 py-2 text-sm font-medium rounded-xl hover:bg-gray-800 transition-colors shadow-sm"
+                                            >
+                                                Apartar
+                                            </button>
+
+                                        </div>
+
+                                    </form>
+
+                                </div>
+
+                            </div>
+
+                            `;
+
+                        }
+
+                    ).join('');
+
+            }
+
+
+
+            /*
+            ========================================================
+            REGISTRAR PEDIDO
+            ========================================================
+            */
+
+            window.registerClientOrder =
+                async function(
+                    e,
+                    perfumeId
+                ) {
+
+                    e.preventDefault();
+
+
+                    const form =
+                        e.target;
+
+
+                    const comprador =
+                        form
+                            .querySelector(
+                                'input[type="text"]'
+                            )
+                            .value
+                            .trim();
+
+
+                    const telefono =
+                        form
+                            .querySelector(
+                                'input[type="tel"]'
+                            )
+                            .value
+                            .trim();
+
+
+                    const tipo =
+                        form
+                            .querySelector(
+                                'select'
+                            )
+                            .value;
+
+
+                    const perfume =
+                        window.globalPerfumesData.find(
+                            p =>
+                                p.__backendId ===
+                                perfumeId
+                        );
+
+
+                    if (!perfume)
+                        return;
+
+
+
+                    const total =
+                        getPerfumePrice(
+                            perfume,
+                            tipo
+                        );
+
+
+
+                    const ultimaFase =
+                        window.fasesData.length > 0
+
+                        ? window.fasesData[
+                            window.fasesData.length - 1
+                          ].nombre
+
+                        : 'F1';
+
+
+
+                    /*
+                    ==================================================
+                    PEDIDO
+
+                    IMPORTANTE:
+                    El administrador busca:
+                    tipo === "pedido"
+
+                    NO:
+                    type === "order"
+                    ==================================================
+                    */
+
+                    const newOrder = {
+
+                        tipo:
+                            'pedido',
+
+
+                        comprador:
+                            comprador,
+
+
+                        telefono:
+                            telefono,
+
+
+                        perfume_id:
+                            perfumeId,
+
+
+                        perfume_nombre:
+                            perfume.nombre,
+
+
+                        tipo_venta:
+                            tipo,
+
+
+                        total:
+                            total,
+
+
+                        pagado:
+                            0,
+
+
+                        metodo_pago:
+                            'Efectivo',
+
+
+                        pagos_detallados: {
+
+                            'Efectivo':
+                                0,
+
+                            'Transferencia':
+                                0
+
+                        },
+
+
+                        fase_nombre:
+                            ultimaFase,
+
+
+                        estado:
+                            'Pendiente'
+
+                    };
+
+
+
+                    const result =
+                        await window.dataSdk.create(
+                            newOrder
+                        );
+
+
+
+                    if (
+                        !result ||
+                        !result.isOk
+                    ) {
+
+                        alert(
+                            'No se pudo registrar el pedido. Intenta nuevamente.'
+                        );
+
+                        return;
+
+                    }
+
+
+
+                    form.reset();
+
+
+
+                    alert(
+                        `¡Listo ${comprador}! Tu apartado para "${perfume.nombre}" (${tipo}) se registró correctamente. Nos pondremos en contacto contigo.`
+                    );
+
+                };
+
+
+
+            /*
+            ========================================================
+            FILTROS
+            ========================================================
+            */
+
+            document
+                .querySelectorAll(
+                    '.availability-tab'
+                )
+                .forEach(
+                    tab => {
+
+                        tab.addEventListener(
+                            'click',
+                            e => {
+
+
+                                document
+                                    .querySelectorAll(
+                                        '.availability-tab'
+                                    )
+                                    .forEach(
+                                        t => {
+
+                                            t.classList.remove(
+                                                'bg-gray-900',
+                                                'text-white',
+                                                'shadow-sm'
+                                            );
+
+
+                                            t.classList.add(
+                                                'text-gray-700',
+                                                'hover:text-gray-900'
+                                            );
+
+                                        }
+                                    );
+
+
+
+                                e.target.classList.add(
+                                    'bg-gray-900',
+                                    'text-white',
+                                    'shadow-sm'
+                                );
+
+
+                                e.target.classList.remove(
+                                    'text-gray-700',
+                                    'hover:text-gray-900'
+                                );
+
+
+
+                                currentAvailabilityFilter =
+                                    e.target.getAttribute(
+                                        'data-availability-filter'
+                                    );
+
+
+                                renderPerfumes();
+
+                            }
+                        );
+
+                    }
+                );
+
+
+
+            /*
+            ========================================================
+            DATOS
+            ========================================================
+            */
+
+            const handler = {
+
+                onDataChanged(items) {
+
+                    const allData =
+                        items || [];
+
+
+
+                    /*
+                    PERFUMES
+
+                    El administrador utiliza:
+                    tipo: "perfume"
+
+                    También dejamos compatibilidad
+                    con type: "perfume".
+                    */
+
+                    window.globalPerfumesData =
+                        allData.filter(
+                            x =>
+
+                                x.tipo === 'perfume' ||
+
+                                x.type === 'perfume' ||
+
+                                (
+                                    !x.tipo &&
+                                    !x.type &&
+                                    x.precio_botella !== undefined
+                                )
+                        );
+
+
+
+                    /*
+                    FASES
+                    */
+
+                    window.fasesData =
+                        allData.filter(
+                            x =>
+
+                                x.tipo === 'fase' ||
+
+                                x.type === 'fase' ||
+
+                                (
+                                    !x.tipo &&
+                                    !x.type &&
+                                    x.descripcion !== undefined &&
+                                    x.nombre &&
+                                    !x.perfume_id
+                                )
+                        );
+
+
+
+                    renderPerfumes();
+
+                }
+
+            };
+
+
+
+            /*
+            ========================================================
+            INICIAR
+            ========================================================
+            */
+
+            window.dataSdk.init(
+                handler
+            );
+
+
+            lucide.createIcons();
+
+        })();
+
+    </script>
+
+</body>
+</html>
