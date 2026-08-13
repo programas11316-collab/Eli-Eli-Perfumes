@@ -295,26 +295,33 @@
   <!-- Lógica y Motor Local -->
   <script>
     window.dataSdk = {
-    _handler: null,
+        _handler: null,
 
-    async init(handler) {
-        this._handler = handler;
-        await this.notify();
-    },
+        async init(handler) {
+            this._handler = handler;
+            await this.notify();
+        },
 
-    async notify() {
-        if (this._handler && typeof this._handler.onDataChanged === 'function') {
-            try {
-                const response = await fetch('perfumes.json?t=' + Date.now());
-                const data = await response.json();
-                this._handler.onDataChanged(data);
-            } catch (error) {
-                console.error("Error al cargar los perfumes:", error);
-                this._handler.onDataChanged([]);
+        async notify() {
+            if (this._handler && typeof this._handler.onDataChanged === 'function') {
+                try {
+                    const local = localStorage.getItem('eli_eli_perfumes_data');
+                    if (local) {
+                        const data = JSON.parse(local);
+                        this._handler.onDataChanged(data);
+                    } else {
+                        const response = await fetch('perfumes.json?t=' + Date.now());
+                        const data = await response.json();
+                        localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(data));
+                        this._handler.onDataChanged(data);
+                    }
+                } catch (error) {
+                    console.error("Error al cargar los datos:", error);
+                    this._handler.onDataChanged([]);
+                }
             }
-        }
-    }
-};
+        },
+
         async create(item) {
             const data = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
             item.__backendId = 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
@@ -323,6 +330,7 @@
             this.notify();
             return { isOk: true };
         },
+
         async update(item) {
             const data = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
             const index = data.findIndex(x => x.__backendId === item.__backendId);
@@ -333,6 +341,7 @@
             }
             return { isOk: true };
         },
+
         async delete(item) {
             let data = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
             data = data.filter(x => x.__backendId !== item.__backendId);
@@ -373,6 +382,8 @@
                 renderPendingOrders();
                 renderHistory();
                 renderFases();
+                updateDatalists();
+                updateHistoryFilters();
             }
         });
 
@@ -416,6 +427,19 @@
                 renderPendingOrders();
             });
         });
+
+        // Datalists para autocompletar
+        function updateDatalists() {
+            const listNombres = document.getElementById('list-nombres');
+            const listMarcas = document.getElementById('list-marcas');
+            if (!listNombres || !listMarcas) return;
+
+            const nombres = [...new Set(perfumes.map(p => p.nombre))];
+            const marcas = [...new Set(perfumes.map(p => p.marca))];
+
+            listNombres.innerHTML = nombres.map(n => `<option value="${n}">`).join('');
+            listMarcas.innerHTML = marcas.map(m => `<option value="${m}">`).join('');
+        }
 
         // Renderizado del Catálogo de Perfumes
         function renderPerfumes() {
@@ -519,16 +543,41 @@
             }).join('');
         }
 
+        // Actualizar Filtros de Historial
+        function updateHistoryFilters() {
+            const container = document.getElementById('history-filter-buttons');
+            if (!container) return;
+
+            let html = `<button data-history-filter="todos" class="history-filter-btn px-3 py-1 text-xs rounded-full border border-gray-300 ${currentHistoryFilter === 'todos' ? 'bg-gray-900 text-white font-medium' : 'hover:bg-gray-100'}">Todas</button>`;
+            fases.forEach(f => {
+                const active = currentHistoryFilter === f.nombre ? 'bg-gray-900 text-white font-medium' : 'hover:bg-gray-100';
+                html += `<button data-history-filter="${f.nombre}" class="history-filter-btn px-3 py-1 text-xs rounded-full border border-gray-300 ${active}">${f.nombre}</button>`;
+            });
+            container.innerHTML = html;
+
+            container.querySelectorAll('.history-filter-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    currentHistoryFilter = e.target.getAttribute('data-history-filter');
+                    updateHistoryFilters();
+                    renderHistory();
+                });
+            });
+        }
+
         // Renderizado del Historial de Ventas
         function renderHistory() {
             const tbody = document.getElementById('history-tbody');
             const empty = document.getElementById('empty-history');
             const totalRev = document.getElementById('total-revenue');
+            const revLabel = document.getElementById('history-revenue-label');
             if (!tbody) return;
 
             let historyList = pedidos;
             if (currentHistoryFilter !== 'todos') {
                 historyList = pedidos.filter(x => x.fase_nombre === currentHistoryFilter);
+                revLabel.textContent = `Ingresos Totales (${currentHistoryFilter} - Incluye Abonos)`;
+            } else {
+                revLabel.textContent = `Ingresos Totales (Todas las Fases - Incluye Abonos)`;
             }
 
             let sumRev = 0;
@@ -568,25 +617,7 @@
         function renderFases() {
             const grid = document.getElementById('fases-grid');
             const empty = document.getElementById('empty-fases');
-            const filterButtonsContainer = document.getElementById('history-filter-buttons');
             if (!grid) return;
-
-            if (filterButtonsContainer) {
-                let filterHtml = `<button data-history-filter="todos" class="history-filter-btn px-3 py-1 text-xs rounded-full border border-gray-300 ${currentHistoryFilter === 'todos' ? 'bg-gray-900 text-white font-medium' : 'hover:bg-gray-100'}">Todas</button>`;
-                fases.forEach(f => {
-                    const isActive = currentHistoryFilter === f.nombre;
-                    filterHtml += `<button data-history-filter="${f.nombre}" class="history-filter-btn px-3 py-1 text-xs rounded-full border border-gray-300 ${isActive ? 'bg-gray-900 text-white font-medium' : 'hover:bg-gray-100'}">${f.nombre}</button>`;
-                });
-                filterButtonsContainer.innerHTML = filterHtml;
-
-                document.querySelectorAll('.history-filter-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        currentHistoryFilter = e.target.getAttribute('data-history-filter');
-                        renderHistory();
-                        renderFases();
-                    });
-                });
-            }
 
             if (fases.length === 0) {
                 grid.innerHTML = '';
@@ -596,107 +627,80 @@
             empty.classList.add('hidden');
 
             grid.innerHTML = fases.map(f => {
-                const itemsThisPhase = fasePerfumes.filter(fp => fp.fase_nombre === f.nombre);
+                const fPerfumes = fasePerfumes.filter(fp => fp.fase_id === f.__backendId);
                 let invTotal = 0;
                 
-                const itemsHtml = itemsThisPhase.map(fp => {
-                    const subtotal = (fp.precio_botella || 0) * (fp.stock || 0);
-                    invTotal += subtotal;
-                    return `<li class="flex justify-between text-xs py-1 border-b border-gray-100">
-                        <span>${fp.perfume_nombre || 'Perfume'} (${fp.stock || 0} pzas)</span>
-                        <span class="font-bold">$${formatPrice(subtotal)}</span>
-                    </li>`;
-                }).join('') || '<p class="text-xs text-gray-400 italic">Sin perfumes en esta fase</p>';
+                const perfumesHtml = fPerfumes.map(fp => {
+                    const sub = Number(fp.costo_unitario || 0) * Number(fp.piezas || 0);
+                    invTotal += sub;
+                    return `<li class="flex justify-between text-xs py-1 border-b border-gray-100"><span>${fp.perfume_nombre} (${fp.piezas} pzs)</span> <strong>$${formatPrice(sub)}</strong></li>`;
+                }).join('') || '<p class="text-xs text-gray-400">Sin perfumes asignados</p>';
+
+                // Ingresos de esta fase
+                const fPedidos = pedidos.filter(p => p.fase_nombre === f.nombre);
+                let ingTotal = 0;
+                fPedidos.forEach(p => ingTotal += Number(p.monto_pagado || 0));
+                const ganancia = ingTotal - invTotal;
 
                 return `
-                <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col">
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <h3 class="font-bold text-lg text-gray-900">${f.nombre}</h3>
-                            <p class="text-xs text-gray-500">${f.descripcion || 'Sin descripción'}</p>
+                <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-base text-gray-900">${f.nombre}</h3>
+                            <div class="flex gap-1">
+                                <button onclick="openEditFase('${f.__backendId}')" class="p-1.5 text-gray-500 hover:text-gray-900 rounded border border-gray-200 hover:bg-gray-50" title="Editar Fase">✏️</button>
+                                <button onclick="confirmDeleteFase('${f.__backendId}')" class="p-1.5 text-red-500 hover:text-red-700 rounded border border-red-100 hover:bg-red-50" title="Eliminar Fase">🗑️</button>
+                            </div>
                         </div>
-                        <div class="flex gap-1">
-                            <button onclick="openEditFase('${f.__backendId}')" class="text-xs border border-gray-200 rounded px-2 py-1 hover:bg-gray-50">✏️</button>
-                            <button onclick="confirmDeleteFase('${f.__backendId}')" class="text-xs border border-red-100 text-red-500 rounded px-2 py-1 hover:bg-red-50">❌</button>
+                        <p class="text-xs text-gray-500 mb-3">${f.descripcion || 'Sin descripción'}</p>
+                        
+                        <div class="mb-3">
+                            <span class="text-xs font-semibold text-gray-600 uppercase block mb-1">Perfumes en la Fase:</span>
+                            <ul class="bg-gray-50 p-2.5 rounded-lg border border-gray-100 max-h-36 overflow-y-auto">${perfumesHtml}</ul>
                         </div>
                     </div>
-                    <div class="border-t border-gray-100 pt-3 mb-3 flex-1">
-                        <p class="text-xs font-semibold text-gray-500 mb-2 uppercase">Perfumes Asignados:</p>
-                        <ul class="space-y-1 mb-3">${itemsHtml}</ul>
-                    </div>
-                    <div class="border-t border-gray-100 pt-3 flex justify-between items-center bg-gray-50 p-3 rounded-lg">
-                        <span class="text-xs font-semibold text-gray-600">Inversión Fase:</span>
-                        <span class="text-sm font-bold text-red-600">$${formatPrice(invTotal)}</span>
+
+                    <div class="space-y-1.5 border-t border-gray-100 pt-3 text-xs">
+                        <div class="flex justify-between"><span>Inversión:</span> <strong class="text-red-600">$${formatPrice(invTotal)}</strong></div>
+                        <div class="flex justify-between"><span>Ingresos:</span> <strong class="text-emerald-600">$${formatPrice(ingTotal)}</strong></div>
+                        <div class="flex justify-between border-t border-gray-100 pt-1 text-sm font-bold"><span>Balance:</span> <strong class="${ganancia >= 0 ? 'text-emerald-700' : 'text-red-700'}">$${formatPrice(ganancia)}</strong></div>
                     </div>
                 </div>
                 `;
             }).join('');
         }
 
-        // Manejo de Modal Perfume
-        const modalPerfume = document.getElementById('modal-perfume');
-        document.getElementById('btn-add-perfume').addEventListener('click', () => {
-            document.getElementById('modal-perfume-title').textContent = 'Nuevo Perfume';
-            document.getElementById('pf-id').value = '';
-            document.getElementById('form-perfume').reset();
-            document.getElementById('pf-imagen-base64').value = '';
-            document.getElementById('pf-image-preview-container').classList.add('hidden');
-            modalPerfume.classList.remove('hidden');
-        });
+        // Acciones globales expuestas al ámbito window
+        window.openOrderModal = function(perfumeId, tipo, precioSugerido) {
+            const p = perfumes.find(x => x.__backendId === perfumeId);
+            if (!p) return;
 
-        document.getElementById('modal-perfume-close').addEventListener('click', () => modalPerfume.classList.add('hidden'));
+            document.getElementById('ord-perfume-id').value = perfumeId;
+            document.getElementById('ord-tipo').value = tipo;
+            document.getElementById('ord-info-label').textContent = `${p.nombre} (${tipo}) - Marca: ${p.marca}`;
+            document.getElementById('ord-precio-total').value = precioSugerido;
+            document.getElementById('ord-monto-pagado').value = precioSugerido;
+            document.getElementById('ord-comprador').value = '';
 
-        document.getElementById('pf-image-file').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    const base64 = evt.target.result;
-                    document.getElementById('pf-imagen-base64').value = base64;
-                    document.getElementById('pf-image-preview').src = base64;
-                    document.getElementById('pf-image-preview-container').classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+            const selectFase = document.getElementById('ord-fase-select');
+            selectFase.innerHTML = fases.map(f => `<option value="${f.nombre}">${f.nombre}</option>`).join('') || '<option value="F1">F1</option>';
 
-        document.getElementById('form-perfume').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const id = document.getElementById('pf-id').value;
-            const nombre = document.getElementById('pf-nombre-input').value.trim();
-            const marca = document.getElementById('pf-marca-input').value.trim();
-            const estado = document.getElementById('pf-estado').value;
-            const precio_5ml = Number(document.getElementById('pf-5ml').value);
-            const precio_10ml = Number(document.getElementById('pf-10ml').value);
-            const precio_botella = Number(document.getElementById('pf-botella').value);
-            const stock = Number(document.getElementById('pf-stock').value);
-            const imagen = document.getElementById('pf-imagen-base64').value;
+            document.getElementById('modal-order').classList.remove('hidden');
+        };
 
-            const perfumeObj = {
-                tipo_registro: 'perfume',
-                nombre,
-                marca,
-                estado,
-                precio_5ml,
-                precio_10ml,
-                precio_botella,
-                stock,
-                imagen
-            };
+        window.payRestOrder = async function(orderId) {
+            const o = pedidos.find(x => x.__backendId === orderId);
+            if (!o) return;
+            o.monto_pagado = o.precio_total;
+            o.estado = 'Liquidado';
+            await window.dataSdk.update(o);
+        };
 
-            if (id) {
-                perfumeObj.__backendId = id;
-                const existing = perfumes.find(p => p.__backendId === id);
-                if (existing && !imagen) {
-                    perfumeObj.imagen = existing.imagen;
-                }
-                await window.dataSdk.update(perfumeObj);
-            } else {
-                await window.dataSdk.create(perfumeObj);
-            }
-
-            modalPerfume.classList.add('hidden');
-        });
+        window.deleteOrder = async function(orderId) {
+            if (!confirm('¿Eliminar este pedido?')) return;
+            const o = pedidos.find(x => x.__backendId === orderId);
+            if (o) await window.dataSdk.delete(o);
+        };
 
         window.openEditPerfume = function(id) {
             const p = perfumes.find(x => x.__backendId === id);
@@ -706,223 +710,29 @@
             document.getElementById('pf-nombre-input').value = p.nombre;
             document.getElementById('pf-marca-input').value = p.marca;
             document.getElementById('pf-estado').value = p.estado || 'Entrega Inmediata';
-            document.getElementById('pf-5ml').value = p.precio_5ml;
-            document.getElementById('pf-10ml').value = p.precio_10ml;
+            document.getElementById('pf-5ml').value = p.precio_5ml || 120;
+            document.getElementById('pf-10ml').value = p.precio_10ml || 180;
             document.getElementById('pf-botella').value = p.precio_botella || 850;
             document.getElementById('pf-stock').value = p.stock || 1;
             document.getElementById('pf-imagen-base64').value = p.imagen || '';
+            
+            const prev = document.getElementById('pf-image-preview');
+            const cont = document.getElementById('pf-image-preview-container');
             if (p.imagen) {
-                document.getElementById('pf-image-preview').src = p.imagen;
-                document.getElementById('pf-image-preview-container').classList.remove('hidden');
+                prev.src = p.imagen;
+                cont.classList.remove('hidden');
             } else {
-                document.getElementById('pf-image-preview-container').classList.add('hidden');
+                cont.classList.add('hidden');
             }
-            modalPerfume.classList.remove('hidden');
+
+            document.getElementById('modal-perfume').classList.remove('hidden');
         };
 
         window.confirmDeletePerfume = async function(id) {
-            if (confirm('¿Estás seguro de eliminar este perfume?')) {
-                const p = perfumes.find(x => x.__backendId === id);
-                if (p) await window.dataSdk.delete(p);
-            }
+            if (!confirm('¿Estás seguro de eliminar este perfume?')) return;
+            const p = perfumes.find(x => x.__backendId === id);
+            if (p) await window.dataSdk.delete(p);
         };
-
-        // Pedidos y Ventas
-        const modalOrder = document.getElementById('modal-order');
-        document.getElementById('modal-order-close').addEventListener('click', () => modalOrder.classList.add('hidden'));
-
-        window.openOrderModal = function(perfumeId, tipo, precioSugerido) {
-            const p = perfumes.find(x => x.__backendId === perfumeId);
-            if (!p) return;
-            document.getElementById('ord-perfume-id').value = perfumeId;
-            document.getElementById('ord-tipo').value = tipo;
-            document.getElementById('ord-info-label').textContent = `${p.nombre} - ${tipo}`;
-            document.getElementById('ord-precio-total').value = precioSugerido;
-            document.getElementById('ord-monto-pagado').value = precioSugerido;
-            document.getElementById('ord-comprador').value = '';
-
-            const faseSelect = document.getElementById('ord-fase-select');
-            faseSelect.innerHTML = fases.length ? fases.map(f => `<option value="${f.nombre}">${f.nombre}</option>`).join('') : '<option value="F1">F1 (Por defecto)</option>';
-
-            modalOrder.classList.remove('hidden');
-        };
-
-        document.getElementById('form-order').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const perfumeId = document.getElementById('ord-perfume-id').value;
-            const tipo = document.getElementById('ord-tipo').value;
-            const p = perfumes.find(x => x.__backendId === perfumeId);
-            const comprador = document.getElementById('ord-comprador').value.trim();
-            const fase_nombre = document.getElementById('ord-fase-select').value || 'F1';
-            const precio_total = Number(document.getElementById('ord-precio-total').value);
-            const monto_pagado = Number(document.getElementById('ord-monto-pagado').value);
-            const metodo_pago = document.getElementById('ord-metodo').value;
-
-            const estado = monto_pagado >= precio_total ? 'Liquidado' : 'Pendiente';
-
-            const pedidoObj = {
-                tipo_registro: 'pedido',
-                perfume_id: perfumeId,
-                perfume_nombre: p ? p.nombre : 'Perfume',
-                tipo,
-                comprador,
-                fase_nombre,
-                precio_total,
-                monto_pagado,
-                metodo_pago,
-                estado
-            };
-
-            await window.dataSdk.create(pedidoObj);
-            modalOrder.classList.add('hidden');
-        });
-
-        window.payRestOrder = async function(id) {
-            const o = pedidos.find(x => x.__backendId === id);
-            if (!o) return;
-            o.monto_pagado = o.precio_total;
-            o.estado = 'Liquidado';
-            await window.dataSdk.update(o);
-        };
-
-        window.deleteOrder = async function(id) {
-            if (confirm('¿Eliminar este registro de pedido?')) {
-                const o = pedidos.find(x => x.__backendId === id);
-                if (o) await window.dataSdk.delete(o);
-            }
-        };
-
-        // Fases
-        const modalFase = document.getElementById('modal-fase');
-        document.getElementById('btn-add-fase').addEventListener('click', () => {
-            const nextNum = fases.length + 1;
-            document.getElementById('fs-id').value = '';
-            document.getElementById('fs-nombre').value = `F${nextNum}`;
-            document.getElementById('fs-descripcion').value = '';
-            
-            renderFasePerfumesChecklist([]);
-            modalFase.classList.remove('hidden');
-        });
-
-        document.getElementById('modal-fase-close').addEventListener('click', () => modalFase.classList.add('hidden'));
-
-        function renderFasePerfumesChecklist(selectedItems) {
-            const container = document.getElementById('fase-perfumes-container');
-            if (!container) return;
-
-            if (perfumes.length === 0) {
-                container.innerHTML = '<p class="text-xs text-gray-400">Primero registra perfumes en el catálogo.</p>';
-                return;
-            }
-
-            container.innerHTML = perfumes.map(p => {
-                const found = selectedItems.find(x => x.perfume_id === p.__backendId);
-                const isChecked = !!found;
-                const stockVal = found ? found.stock : 1;
-                const precioVal = found ? found.precio_botella : (p.precio_botella || 850);
-
-                return `
-                <div class="p-2 rounded bg-white border border-gray-200 text-xs space-y-2">
-                    <div class="flex items-center justify-between">
-                        <label class="font-bold flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" class="fp-check rounded" value="${p.__backendId}" ${isChecked ? 'checked' : ''}>
-                            <span>${p.nombre} (${p.marca})</span>
-                        </label>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 ${isChecked ? '' : 'hidden'} fp-inputs">
-                        <div>
-                            <span class="text-gray-500 block text-[10px]">Piezas (Botellas):</span>
-                            <input type="number" class="fp-stock w-full border rounded px-2 py-1" value="${stockVal}" min="1">
-                        </div>
-                        <div>
-                            <span class="text-gray-500 block text-[10px]">Costo Botella ($):</span>
-                            <input type="number" class="fp-precio w-full border rounded px-2 py-1" value="${precioVal}">
-                        </div>
-                    </div>
-                </div>
-                `;
-            }).join('');
-
-            container.querySelectorAll('.fp-check').forEach(chk => {
-                chk.addEventListener('change', (e) => {
-                    const parent = e.target.closest('div').nextElementSibling;
-                    if (e.target.checked) {
-                        parent.classList.remove('hidden');
-                    } else {
-                        parent.classList.add('hidden');
-                    }
-                    calculateFaseTotal();
-                });
-            });
-
-            container.querySelectorAll('.fp-stock, .fp-precio').forEach(inp => {
-                inp.addEventListener('input', calculateFaseTotal);
-            });
-
-            calculateFaseTotal();
-        }
-
-        function calculateFaseTotal() {
-            let total = 0;
-            document.querySelectorAll('.fp-check').forEach(chk => {
-                if (chk.checked) {
-                    const parent = chk.closest('div').nextElementSibling;
-                    const stock = Number(parent.querySelector('.fp-stock').value) || 0;
-                    const precio = Number(parent.querySelector('.fp-precio').value) || 0;
-                    total += stock * precio;
-                }
-            });
-            document.getElementById('fase-total-inversion').textContent = `$${formatPrice(total)}`;
-        }
-
-        document.getElementById('form-fase').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const id = document.getElementById('fs-id').value;
-            const nombre = document.getElementById('fs-nombre').value;
-            const descripcion = document.getElementById('fs-descripcion').value;
-
-            const faseObj = {
-                tipo_registro: 'fase',
-                nombre,
-                descripcion
-            };
-
-            if (id) {
-                faseObj.__backendId = id;
-                await window.dataSdk.update(faseObj);
-            } else {
-                await window.dataSdk.create(faseObj);
-            }
-
-            // Remover relaciones de fase_perfume anteriores para esta fase
-            let currentAll = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
-            currentAll = currentAll.filter(x => !(x.tipo_registro === 'fase_perfume' && x.fase_nombre === nombre));
-
-            // Agregar las nuevas seleccionadas
-            document.querySelectorAll('.fp-check').forEach(chk => {
-                if (chk.checked) {
-                    const perfumeId = chk.value;
-                    const p = perfumes.find(x => x.__backendId === perfumeId);
-                    const parent = chk.closest('div').nextElementSibling;
-                    const stock = Number(parent.querySelector('.fp-stock').value) || 1;
-                    const precio_botella = Number(parent.querySelector('.fp-precio').value) || 850;
-
-                    currentAll.push({
-                        tipo_registro: 'fase_perfume',
-                        __backendId: 'fp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
-                        fase_nombre: nombre,
-                        perfume_id: perfumeId,
-                        perfume_nombre: p ? p.nombre : '',
-                        stock,
-                        precio_botella
-                    });
-                }
-            });
-
-            localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(currentAll));
-            window.dataSdk.notify();
-            modalFase.classList.add('hidden');
-        });
 
         window.openEditFase = function(id) {
             const f = fases.find(x => x.__backendId === id);
@@ -930,81 +740,290 @@
             document.getElementById('modal-fase-title').textContent = 'Editar Fase';
             document.getElementById('fs-id').value = f.__backendId;
             document.getElementById('fs-nombre').value = f.nombre;
+            document.getElementById('fs-old-nombre').value = f.nombre;
             document.getElementById('fs-descripcion').value = f.descripcion || '';
-
-            const assigned = fasePerfumes.filter(fp => fp.fase_nombre === f.nombre);
-            renderFasePerfumesChecklist(assigned);
-            modalFase.classList.remove('hidden');
+            
+            buildFasePerfumesChecklist(f.__backendId);
+            document.getElementById('modal-fase').classList.remove('hidden');
         };
 
         window.confirmDeleteFase = async function(id) {
-            if (confirm('¿Eliminar esta fase?')) {
-                const f = fases.find(x => x.__backendId === id);
-                if (f) {
-                    let currentAll = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
-                    currentAll = currentAll.filter(x => !(x.tipo_registro === 'fase_perfume' && x.fase_nombre === f.nombre));
-                    localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(currentAll));
-                    await window.dataSdk.delete(f);
+            if (!confirm('¿Eliminar esta fase y sus asociaciones?')) return;
+            const f = fases.find(x => x.__backendId === id);
+            if (f) {
+                // Borrar relaciones de fase_perfume asociadas
+                const associated = fasePerfumes.filter(fp => fp.fase_id === id);
+                for (let fp of associated) {
+                    await window.dataSdk.delete(fp);
                 }
+                await window.dataSdk.delete(f);
             }
         };
 
+        // Event Listeners para Abrir Modales de Creación
+        document.getElementById('btn-add-perfume').addEventListener('click', () => {
+            document.getElementById('modal-perfume-title').textContent = 'Nuevo Perfume';
+            document.getElementById('form-perfume').reset();
+            document.getElementById('pf-id').value = '';
+            document.getElementById('pf-imagen-base64').value = '';
+            document.getElementById('pf-image-preview-container').classList.add('hidden');
+            document.getElementById('modal-perfume').classList.remove('hidden');
+        });
+
+        function buildFasePerfumesChecklist(faseId = null) {
+            const container = document.getElementById('fase-perfumes-container');
+            const currentAssociated = faseId ? fasePerfumes.filter(fp => fp.fase_id === faseId) : [];
+
+            container.innerHTML = perfumes.map(p => {
+                const assoc = currentAssociated.find(x => x.perfume_id === p.__backendId);
+                const checked = assoc ? 'checked' : '';
+                const piezas = assoc ? assoc.piezas : 1;
+                const costo = assoc ? assoc.costo_unitario : (p.precio_botella || 850);
+
+                return `
+                <div class="flex items-center justify-between gap-2 p-2 bg-white rounded border border-gray-200">
+                    <label class="flex items-center gap-2 text-xs font-medium text-gray-800 flex-1 cursor-pointer">
+                        <input type="checkbox" name="fase-perfume-chk" value="${p.__backendId}" ${checked} class="rounded border-gray-300">
+                        <span>${p.nombre} (${p.marca})</span>
+                    </label>
+                    <div class="flex items-center gap-1">
+                        <input type="number" name="fase-perfume-piezas-${p.__backendId}" value="${piezas}" min="1" class="w-14 border rounded px-1 py-0.5 text-xs text-center" placeholder="Pzs">
+                        <input type="number" name="fase-perfume-costo-${p.__backendId}" value="${costo}" class="w-20 border rounded px-1 py-0.5 text-xs text-center" placeholder="Costo">
+                    </div>
+                </div>
+                `;
+            }).join('') || '<p class="text-xs text-gray-400 text-center py-2">Registra primero algunos perfumes.</p>';
+            
+            updateFaseInversionTotal();
+            container.querySelectorAll('input').forEach(inp => {
+                inp.addEventListener('input', updateFaseInversionTotal);
+            });
+        }
+
+        function updateFaseInversionTotal() {
+            let total = 0;
+            document.querySelectorAll('input[name="fase-perfume-chk"]:checked').forEach(chk => {
+                const pid = chk.value;
+                const pzs = Number(document.querySelector(`input[name="fase-perfume-piezas-${pid}"]`)?.value || 0);
+                const costo = Number(document.querySelector(`input[name="fase-perfume-costo-${pid}"]`)?.value || 0);
+                total += pzs * costo;
+            });
+            document.getElementById('fase-total-inversion').textContent = `$${formatPrice(total)}`;
+        }
+
+        document.getElementById('btn-add-fase').addEventListener('click', () => {
+            document.getElementById('modal-fase-title').textContent = 'Nueva Fase';
+            document.getElementById('form-fase').reset();
+            document.getElementById('fs-id').value = '';
+            document.getElementById('fs-old-nombre').value = '';
+            
+            // Generar nombre automático F1, F2...
+            const nextNum = fases.length + 1;
+            document.getElementById('fs-nombre').value = `F${nextNum}`;
+
+            buildFasePerfumesChecklist();
+            document.getElementById('modal-fase').classList.remove('hidden');
+        });
+
+        // Cierre de Modales
+        ['modal-perfume', 'modal-fase', 'modal-order'].forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            modal.querySelector('button[type="button"]').addEventListener('click', () => modal.classList.add('hidden'));
+        });
+
+        // Manejo de Imagen de Perfume a Base64
+        document.getElementById('pf-image-file').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(uploadEvent) {
+                    const base64 = uploadEvent.target.result;
+                    document.getElementById('pf-imagen-base64').value = base64;
+                    document.getElementById('pf-image-preview').src = base64;
+                    document.getElementById('pf-image-preview-container').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Guardar Perfume Form
+        document.getElementById('form-perfume').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('pf-id').value;
+            const item = {
+                tipo_registro: 'perfume',
+                nombre: document.getElementById('pf-nombre-input').value.trim(),
+                marca: document.getElementById('pf-marca-input').value.trim(),
+                estado: document.getElementById('pf-estado').value,
+                precio_5ml: Number(document.getElementById('pf-5ml').value),
+                precio_10ml: Number(document.getElementById('pf-10ml').value),
+                precio_botella: Number(document.getElementById('pf-botella').value),
+                stock: Number(document.getElementById('pf-stock').value),
+                imagen: document.getElementById('pf-imagen-base64').value
+            };
+
+            if (id) {
+                item.__backendId = id;
+                await window.dataSdk.update(item);
+            } else {
+                await window.dataSdk.create(item);
+            }
+            document.getElementById('modal-perfume').classList.add('hidden');
+        });
+
+        // Guardar Fase Form
+        document.getElementById('form-fase').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('fs-id').value;
+            const nombre = document.getElementById('fs-nombre').value;
+            const oldNombre = document.getElementById('fs-old-nombre').value;
+            const descripcion = document.getElementById('fs-descripcion').value;
+
+            let faseBackendId = id;
+            const faseItem = {
+                tipo_registro: 'fase',
+                nombre,
+                descripcion
+            };
+
+            if (id) {
+                faseItem.__backendId = id;
+                await window.dataSdk.update(faseItem);
+                // Borrar relaciones anteriores de fase_perfume para recrearlas limpias
+                const oldAssocs = fasePerfumes.filter(fp => fp.fase_id === id);
+                for (let oa of oldAssocs) {
+                    await window.dataSdk.delete(oa);
+                }
+            } else {
+                // Crear nueva fase
+                const res = await window.dataSdk.create(faseItem);
+                // Recargar fases para obtener el ID asignado
+                const updatedFases = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]').filter(x => x.tipo_registro === 'fase');
+                const createdFase = updatedFases.find(x => x.nombre === nombre);
+                if (createdFase) faseBackendId = createdFase.__backendId;
+            }
+
+            // Guardar elementos seleccionados en la fase
+            const checkboxes = document.querySelectorAll('input[name="fase-perfume-chk"]:checked');
+            for (let chk of checkboxes) {
+                const pid = chk.value;
+                const perf = perfumes.find(x => x.__backendId === pid);
+                const piezas = Number(document.querySelector(`input[name="fase-perfume-piezas-${pid}"]`)?.value || 1);
+                const costo_unitario = Number(document.querySelector(`input[name="fase-perfume-costo-${pid}"]`)?.value || 850);
+
+                const fpItem = {
+                    tipo_registro: 'fase_perfume',
+                    fase_id: faseBackendId,
+                    fase_nombre: nombre,
+                    perfume_id: pid,
+                    perfume_nombre: perf ? perf.nombre : 'Perfume',
+                    piezas,
+                    costo_unitario
+                };
+                await window.dataSdk.create(fpItem);
+            }
+
+            // Si cambió el nombre de la fase, actualizar en cascada los pedidos existentes
+            if (oldNombre && oldNombre !== nombre) {
+                const currentData = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
+                currentData.forEach(item => {
+                    if (item.tipo_registro === 'pedido' && item.fase_nombre === oldNombre) {
+                        item.fase_nombre = nombre;
+                    }
+                });
+                localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(currentData));
+            }
+
+            document.getElementById('modal-fase').classList.add('hidden');
+            window.dataSdk.notify();
+        });
+
+        // Guardar Pedido Form
+        document.getElementById('form-order').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const perfumeId = document.getElementById('ord-perfume-id').value;
+            const tipo = document.getElementById('ord-tipo').value;
+            const p = perfumes.find(x => x.__backendId === perfumeId);
+            
+            const precioTotal = Number(document.getElementById('ord-precio-total').value);
+            const montoPagado = Number(document.getElementById('ord-monto-pagado').value);
+            const estado = montoPagado >= precioTotal ? 'Liquidado' : 'Pendiente';
+
+            const orderItem = {
+                tipo_registro: 'pedido',
+                perfume_id: perfumeId,
+                perfume_nombre: p ? p.nombre : 'Perfume',
+                tipo,
+                comprador: document.getElementById('ord-comprador').value.trim(),
+                fase_nombre: document.getElementById('ord-fase-select').value,
+                precio_total: precioTotal,
+                monto_pagado: montoPagado,
+                metodo_pago: document.getElementById('ord-metodo').value,
+                estado,
+                fecha: new Date().toISOString()
+            };
+
+            await window.dataSdk.create(orderItem);
+            document.getElementById('modal-order').classList.add('hidden');
+        });
+
+        // Reset de Fases
         document.getElementById('btn-reset-fases').addEventListener('click', async () => {
-            if (confirm('¿Eliminar todas las fases y sus asignaciones?')) {
-                let currentAll = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
-                currentAll = currentAll.filter(x => x.tipo_registro !== 'fase' && x.tipo_registro !== 'fase_perfume');
-                localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(currentAll));
-                window.dataSdk.notify();
-            }
+            if (!confirm('¿Estás seguro de eliminar todas las fases y sus relaciones?')) return;
+            const currentData = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
+            const filtered = currentData.filter(x => x.tipo_registro !== 'fase' && x.tipo_registro !== 'fase_perfume');
+            localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(filtered));
+            window.dataSdk.notify();
         });
 
+        // Limpiar Historial / Pedidos
         document.getElementById('btn-reset-history').addEventListener('click', async () => {
-            if (confirm('¿Limpiar todo el historial de ventas y pedidos?')) {
-                let currentAll = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
-                currentAll = currentAll.filter(x => x.tipo_registro !== 'pedido');
-                localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(currentAll));
-                window.dataSdk.notify();
-            }
+            if (!confirm('¿Estás seguro de limpiar todo el historial de ventas y pedidos?')) return;
+            const currentData = JSON.parse(localStorage.getItem('eli_eli_perfumes_data') || '[]');
+            const filtered = currentData.filter(x => x.tipo_registro !== 'pedido');
+            localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(filtered));
+            window.dataSdk.notify();
         });
 
-        // Exportar / Importar Respaldo JSON
+        // Exportar Respaldo JSON
         document.getElementById('btn-export-backup').addEventListener('click', () => {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(localStorage.getItem('eli_eli_perfumes_data') || '[]');
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", "respaldo_eli_eli_perfumes.json");
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
+            const data = localStorage.getItem('eli_eli_perfumes_data') || '[]';
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `eli_eli_perfumes_respaldo_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
         });
 
+        // Importar Respaldo JSON
         document.getElementById('btn-import-backup').addEventListener('click', () => {
             document.getElementById('import-file-input').click();
         });
 
-        document.getElementById('import-file-input').addEventListener('change', function(e) {
+        document.getElementById('import-file-input').addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    try {
-                        const parsed = JSON.parse(evt.target.result);
-                        if (Array.isArray(parsed)) {
-                            localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(parsed));
-                            window.dataSdk.notify();
-                            alert('Respaldo importado correctamente.');
-                        } else {
-                            alert('El archivo no tiene el formato correcto.');
-                        }
-                    } catch(err) {
-                        alert('Error al leer el archivo JSON.');
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(uploadEvent) {
+                try {
+                    const parsed = JSON.parse(uploadEvent.target.result);
+                    if (Array.isArray(parsed)) {
+                        localStorage.setItem('eli_eli_perfumes_data', JSON.stringify(parsed));
+                        window.dataSdk.notify();
+                        alert('¡Respaldo importado correctamente!');
+                    } else {
+                        alert('El archivo JSON no tiene un formato válido.');
                     }
-                };
-                reader.readAsText(file);
-            }
+                } catch(err) {
+                    alert('Error al leer el archivo JSON.');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
         });
 
-        lucide.createIcons();
     })();
   </script>
  </body>
