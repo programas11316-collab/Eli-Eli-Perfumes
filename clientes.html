@@ -30,13 +30,13 @@
 
             <div class="flex items-center gap-3">
 
-                <h1 class="text-lg md:text-xl font-bold text-gray-900">
+                <h1 class="text-base sm:text-lg md:text-xl font-bold text-gray-900 truncate">
                     Eli & Eli Perfumes y Decants
                 </h1>
 
             </div>
 
-            <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-medium">
+            <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-medium shrink-0">
                 Catálogo Oficial
             </span>
 
@@ -56,7 +56,7 @@
                     Nuestros Perfumes y Decants
                 </h2>
 
-                <p class="text-sm text-gray-500 mt-1">
+                <p class="text-sm text-gray-500 mt-1 max-w-md mx-auto">
                     Elige tu fragancia favorita y apártala al instante.
                     (Haz clic en la imagen para ver la descripción)
                 </p>
@@ -71,21 +71,21 @@
 
                     <button
                         data-availability-filter="todos"
-                        class="availability-tab px-3.5 py-1.5 text-xs md:text-sm font-semibold rounded-lg bg-gray-900 text-white shadow-sm transition-all"
+                        class="availability-tab px-3.5 py-1.5 text-xs md:text-sm font-semibold rounded-lg bg-gray-900 text-white shadow-sm transition-all shrink-0"
                     >
                         Todos
                     </button>
 
                     <button
                         data-availability-filter="Entrega Inmediata"
-                        class="availability-tab px-3.5 py-1.5 text-xs md:text-sm font-semibold rounded-lg text-gray-700 hover:text-gray-900 transition-all"
+                        class="availability-tab px-3.5 py-1.5 text-xs md:text-sm font-semibold rounded-lg text-gray-700 hover:text-gray-900 transition-all shrink-0"
                     >
                         Entrega Inmediata
                     </button>
 
                     <button
                         data-availability-filter="Sobre Pedido"
-                        class="availability-tab px-3.5 py-1.5 text-xs md:text-sm font-semibold rounded-lg text-gray-700 hover:text-gray-900 transition-all"
+                        class="availability-tab px-3.5 py-1.5 text-xs md:text-sm font-semibold rounded-lg text-gray-700 hover:text-gray-900 transition-all shrink-0"
                     >
                         Sobre Pedido
                     </button>
@@ -126,7 +126,7 @@
 
             <button
                 onclick="closePerfumeModal()"
-                class="absolute top-3 right-3 z-10 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full p-2 transition-colors"
+                class="absolute top-3 right-3 z-10 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full p-2 transition-colors cursor-pointer"
             >
 
                 <svg
@@ -209,7 +209,7 @@
 
                 <button
                     onclick="closePerfumeModal()"
-                    class="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-2.5 rounded-xl transition-colors text-sm"
+                    class="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-2.5 rounded-xl transition-colors text-sm cursor-pointer"
                 >
                     Cerrar
                 </button>
@@ -454,11 +454,6 @@
                     'https://images.pexels.com/photos/15096784/pexels-photo-15096784.jpeg?auto=compress&cs=tinysrgb&w=400';
 
 
-                /*
-                IMPORTANTE:
-                El administrador utiliza "estado".
-                */
-
                 const disp =
                     perfume.estado ||
                     'Entrega Inmediata';
@@ -555,7 +550,7 @@
 
             /*
             ========================================================
-            FORMATEAR PRECIO
+            FORMATEAR PRECIO (SIN DECIMALES)
             ========================================================
             */
 
@@ -563,9 +558,7 @@
 
                 try {
 
-                    return parseInt(
-                        v || 0
-                    ).toLocaleString(
+                    return Math.round(v || 0).toLocaleString(
                         'es-MX'
                     );
 
@@ -641,11 +634,6 @@
 
 
 
-                /*
-                IMPORTANTE:
-                AQUÍ TAMBIÉN USAMOS "estado".
-                */
-
                 const filteredPerfumes =
                     window.globalPerfumesData.filter(
                         p => {
@@ -701,10 +689,6 @@
                                 p.imagen ||
                                 'https://images.pexels.com/photos/15096784/pexels-photo-15096784.jpeg?auto=compress&cs=tinysrgb&w=400';
 
-
-                            /*
-                            USAMOS estado
-                            */
 
                             const disp =
                                 p.estado ||
@@ -1008,7 +992,7 @@
                                         >
 
                                             <select
-                                                class="flex-1 border border-gray-300 rounded-xl px-2.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+                                                class="flex-1 border border-gray-300 rounded-xl px-2.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 min-w-0"
                                             >
 
 
@@ -1032,30 +1016,27 @@
 
                                                     <option value="Decant 5ml">
 
-                                                        5ml
-                                                        ($${formatPrice(
+                                                        Decant 5ml - $${formatPrice(
                                                             p.precio_5ml
-                                                        )})
+                                                        )} MXN
 
                                                     </option>
 
 
                                                     <option value="Decant 10ml">
 
-                                                        10ml
-                                                        ($${formatPrice(
+                                                        Decant 10ml - $${formatPrice(
                                                             p.precio_10ml
-                                                        )})
+                                                        )} MXN
 
                                                     </option>
 
 
                                                     <option value="Botella Completa">
 
-                                                        Botella
-                                                        ($${formatPrice(
+                                                        Botella Completa - $${formatPrice(
                                                             p.precio_botella
-                                                        )})
+                                                        )} MXN
 
                                                     </option>
 
@@ -1068,7 +1049,7 @@
 
                                             <button
                                                 type="submit"
-                                                class="bg-gray-900 text-white px-4 py-2 text-sm font-medium rounded-xl hover:bg-gray-800 transition-colors shadow-sm"
+                                                class="bg-gray-900 text-white px-4 py-2 text-sm font-medium rounded-xl hover:bg-gray-800 transition-colors shadow-sm shrink-0 cursor-pointer"
                                             >
                                                 Apartar
                                             </button>
@@ -1167,19 +1148,6 @@
                         : 'F1';
 
 
-
-                    /*
-                    ==================================================
-                    PEDIDO
-
-                    IMPORTANTE:
-                    El administrador busca:
-                    tipo === "pedido"
-
-                    NO:
-                    type === "order"
-                    ==================================================
-                    */
 
                     const newOrder = {
 
@@ -1362,16 +1330,6 @@
 
 
 
-                    /*
-                    PERFUMES
-
-                    El administrador utiliza:
-                    tipo: "perfume"
-
-                    También dejamos compatibilidad
-                    con type: "perfume".
-                    */
-
                     window.globalPerfumesData =
                         allData.filter(
                             x =>
@@ -1388,10 +1346,6 @@
                         );
 
 
-
-                    /*
-                    FASES
-                    */
 
                     window.fasesData =
                         allData.filter(
